@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lockpick Solver</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#14100c;
+    --panel:#1e1811;
+    --panel-2:#251d14;
+    --steel:#8b8377;
+    --steel-dim:#5b564c;
+    --brass:#c08a3e;
+    --brass-bright:#e2ac5c;
+    --parchment:#e9ddc3;
+    --muted:#9c9184;
+    --rust:#a6432f;
+    --rust-bright:#c65a3f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background-color:var(--void);
+    color:var(--parchment);
+    font-family:'Inter',sans-serif;
+    padding:32px 18px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+
+  /* HERO */
+  .hero{text-align:center;margin-bottom:34px;}
+  .holes-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px;opacity:.8;}
+  .hole-dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #3a332a, #0c0a07 70%);border:1px solid var(--steel-dim);}
+  .hole-dot.lit{background:radial-gradient(circle at 35% 30%, var(--brass-bright), var(--brass) 60%, #6b4a1e 100%);border-color:var(--brass);}
+  h1{
+    font-family:'Cinzel',serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,42px);
+    letter-spacing:.03em;
+    margin:0 0 8px;
+    color:var(--parchment);
+    text-shadow:0 2px 12px rgba(192,138,62,.15);
+  }
+  .sub{color:var(--muted);font-size:14.5px;max-width:520px;margin:0 auto;line-height:1.5;}
+
+  /* PANEL */
+  .panel{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid #38301fbb;
+    border-radius:14px;
+    padding:22px 22px 26px;
+    margin-bottom:22px;
+    box-shadow:0 12px 30px -14px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .panel h2{
+    font-family:'Cinzel',serif;
+    font-size:15px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--brass-bright);
+    margin:0 0 4px;
+    font-weight:600;
+  }
+  .panel .hint{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.5;}
+
+  /* CONFIG ROW */
+  .config-row{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;margin-bottom:4px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .stepper{display:flex;align-items:center;border:1px solid var(--steel-dim);border-radius:8px;overflow:hidden;background:#150f0a;}
+  .stepper button{
+    background:#241c13;color:var(--brass-bright);border:none;width:30px;height:32px;
+    font-size:16px;cursor:pointer;transition:background .15s;
+  }
+  .stepper button:hover{background:#33281a;}
+  .stepper input{
+    width:44px;text-align:center;background:transparent;border:none;color:var(--parchment);
+    font-family:'JetBrains Mono',monospace;font-size:15px;-moz-appearance:textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+  .lock-area{display:flex;align-items:center;justify-content:center;}
+  .lock-area .lock-wrap{position:relative;margin:10px 0 0;overflow:visible;}
+  .reset-btn{
+    position:absolute;right:-100px;transform:translateY(-50%);
+    width:86px;height:104px;border-radius:12px;
+    border:1px solid var(--steel-dim);background:#1c150d;color:var(--brass-bright);
+    cursor:pointer;transition:border-color .15s, background .15s;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  }
+  .reset-btn .sym{font-size:30px;line-height:1;}
+  .reset-btn .cap{font-size:11px;line-height:1.25;color:var(--parchment);font-family:'JetBrains Mono',monospace;letter-spacing:.02em;text-align:center;}
+  .reset-btn:hover{border-color:var(--brass-bright);background:#2c2210;}
+  .reset-btn:hover .sym{display:inline-block;transform:rotate(-30deg);transition:transform .15s;}
+  .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
+
+  /* LOCK DIAGRAM */
+  .lock-wrap{
+    width:100%;
+    max-width:360px;
+    margin:10px auto 0;
+    overflow-x:auto;
+  }
+  #lockSvg{width:100%;height:auto;display:block;min-width:220px;}
+  .plate-bar{stroke:#453a28;stroke-width:15;stroke-linecap:round;cursor:ns-resize;touch-action:none;}
+  .drag-hit{cursor:ns-resize;touch-action:none;}
+  .pin-line{stroke:var(--brass-bright);stroke-width:2;opacity:.5;}
+  .slide-arrow{fill:#2a2115;stroke:var(--steel-dim);stroke-width:1;cursor:pointer;transition:.15s;}
+  .slide-arrow:hover{fill:var(--brass);stroke:var(--brass-bright);}
+  .solved-ring{fill:none;stroke:#5fae5a;stroke-width:1.5;opacity:.85;pointer-events:none;}
+  .hole-circle{fill:#0c0906;stroke:var(--steel-dim);stroke-width:1.5;cursor:ns-resize;touch-action:none;transition:.12s;}
+  .hole-circle:hover{stroke:var(--brass-bright);stroke-width:2.5;}
+  .hole-circle.center-hint{stroke:var(--steel);stroke-width:2;stroke-dasharray:1.5 2.5;}
+  .hole-circle.pin{fill:var(--brass-bright);stroke:var(--brass);stroke-width:2;
+    filter:drop-shadow(0 0 4px rgba(226,172,92,.7));}
+  .plate-node{fill:#1c150d;stroke:var(--steel-dim);stroke-width:2;cursor:pointer;transition:.15s;}
+  .plate-node:hover{stroke:var(--brass-bright);}
+  .plate-node.selected{fill:#2c2210;stroke:var(--brass-bright);stroke-width:3;
+    filter:drop-shadow(0 0 7px rgba(226,172,92,.55));}
+  .node-label-sm{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+    fill:var(--parchment);text-anchor:middle;dominant-baseline:central;pointer-events:none;
+  }
+  .lock-edge{stroke-width:2.5;cursor:pointer;transition:stroke-width .12s;}
+  .lock-edge:hover{stroke-width:4;}
+  .lock-edge.same{stroke:var(--brass);}
+  .lock-edge.opp{stroke:var(--rust);}
+  .edge-arrow{pointer-events:none;stroke:var(--void);stroke-width:1.5;}
+  .edge-arrow.same{fill:var(--brass-bright);}
+  .edge-arrow.opp{fill:var(--rust-bright);}
+  .legend{display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center;row-gap:8px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:16px;height:16px;border-radius:4px;display:inline-block;border:1px solid #3a2f1e;}
+  .legend i.same{background:linear-gradient(180deg,#2c2210,#1c1608);border-color:var(--brass);}
+  .legend i.opp{background:linear-gradient(180deg,#2c1712,#1c0e0a);border-color:var(--rust);}
+
+  /* BUTTON */
+  .solve-btn{
+    display:block;width:100%;margin-top:22px;padding:15px;border-radius:10px;border:1px solid var(--brass);
+    background:linear-gradient(180deg,var(--brass-bright),var(--brass));
+    color:#20160a;font-family:'Cinzel',serif;font-weight:700;font-size:16px;letter-spacing:.05em;
+    cursor:pointer;transition:filter .15s, transform .1s;
+    text-transform:uppercase;
+  }
+  .solve-btn:hover{filter:brightness(1.08);}
+  .solve-btn:active{transform:scale(.995);}
+
+  /* RESULT */
+  #result{margin-top:22px;}
+  .status{font-size:14px;padding:12px 14px;border-radius:8px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
+  .status.ok{background:#1a2418;border:1px solid #3f6b3a;color:#9fd695;}
+  .status.err{background:#241413;border:1px solid var(--rust);color:#f0a08f;}
+
+  .move-list{list-style:none;margin:0;padding:0;counter-reset:step;}
+  .move-list li{
+    counter-increment:step;
+    display:flex;align-items:center;gap:12px;
+    padding:9px 4px;border-bottom:1px solid #2a2115;
+    font-family:'JetBrains Mono',monospace;font-size:14px;
+  }
+  .move-list li:last-child{border-bottom:none;}
+  .move-list li::before{
+    content:counter(step);
+    min-width:24px;height:24px;border-radius:50%;background:#2a2115;color:var(--brass-bright);
+    display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
+  }
+  .move-plate{color:var(--parchment);font-weight:700;min-width:82px;}
+  .move-dir{
+    padding:2px 10px;border-radius:5px;font-weight:700;
+    background:#241c13;color:var(--brass-bright);border:1px solid var(--brass);
+  }
+  .move-dir.neg{color:var(--rust-bright);border-color:var(--rust);}
+  .move-x{color:var(--muted);font-size:12.5px;}
+
+  .result-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .ghost-btn{
+    background:transparent;border:1px solid var(--steel-dim);color:var(--muted);
+    padding:9px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
+    transition:.15s;
+  }
+  .ghost-btn:hover{border-color:var(--brass);color:var(--brass-bright);}
+
+  .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
+  @media (max-width:520px){
+    .config-row{gap:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="holes-row" id="holesRow"></div>
+    <h1>Lockpick Mechanism</h1>
+    <p class="sub">Set the pin positions and plate links — the solver finds the shortest path to center.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Lock Setup</h2>
+    <div class="config-row">
+      <div class="field">
+        <label>Plates</label>
+        <div class="stepper">
+          <button type="button" onclick="changePlates(-1)">−</button>
+          <input id="plateCount" type="number" value="5" min="2" max="8" readonly>
+          <button type="button" onclick="changePlates(1)">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Holes</label>
+        <div class="stepper">
+          <button type="button" onclick="changeHoles(-1)">−</button>
+          <input id="holeCount" type="number" value="7" min="3" max="9" readonly>
+          <button type="button" onclick="changeHoles(1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Lock Scheme</h2>
+    <p class="hint">Drag a plate up/down (grab anywhere on it), use ▲ ▼, or click a hole directly. Dashed hole = target. To link plates: click one «P» circle, then another (repeat clicks cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
+    <div class="lock-area">
+      <div class="lock-wrap">
+        <svg id="lockSvg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"></svg>
+        <button class="reset-btn" id="resetSeqBtn" onclick="resetSequences()" title="Reset all plate links"><span class="sym">⟲</span><span class="cap">reset<br>sequences</span></button>
+        <button class="reset-btn" id="resetPlatesBtn" onclick="resetPlates()" title="Reset pins to center"><span class="sym">⟲</span><span class="cap">reset<br>plates</span></button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="same"></i> same direction</span>
+      <span><i class="opp"></i> opposite</span>
+      <span style="opacity:.8;">➤ = mover → follower</span>
+    </div>
+  </div>
+
+  <button class="solve-btn" onclick="runSolve()">Calculate Sequence</button>
+
+  <div id="result"></div>
+
+  <p class="footnote">Finds the shortest sequence, keeping every pin inside the holes at all intermediate steps.</p>
+
+</div>
+
+<script>
+let numPlates = 5;
+let numHoles = 7;
+let relations = {}; // "i-j" -> 1 or -1
+
+function keyOf(i,j){return i+'-'+j;}
+
+function resetPlates(){
+  pinPositions = [];
+  initPins();
+  renderLock();
+}
+
+function resetSequences(){
+  relations = {};
+  selectedNode = null;
+  renderLock();
+}
+
+function resetLock(){ // full reset, kept for programmatic use
+  resetSequences();
+  resetPlates();
+  document.getElementById('result').innerHTML='';
+}
+
+function renderHolesRow(){
+  const row = document.getElementById('holesRow');
+  row.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d = document.createElement('div');
+    d.className='hole-dot'+(i===3?' lit':'');
+    row.appendChild(d);
+  }
+}
+
+function changePlates(delta){
+  const ni = numPlates+delta;
+  if(ni<2||ni>8) return;
+  numPlates = ni;
+  document.getElementById('plateCount').value = numPlates;
+  // drop relations referencing removed plate
+  Object.keys(relations).forEach(k=>{
+    const [a,b]=k.split('-').map(Number);
+    if(a>numPlates||b>numPlates) delete relations[k];
+  });
+  if(selectedNode>numPlates) selectedNode=null;
+  initPins();
+  renderLock();
+}
+
+function changeHoles(delta){
+  const nh = numHoles+delta;
+  if(nh<3||nh>9) return;
+  numHoles = nh;
+  document.getElementById('holeCount').value = numHoles;
+  initPins();
+  renderLock();
+}
+
+function centerOf(h){ return Math.ceil((h+1)/2); }
+
+let pinPositions = []; // pinPositions[p-1] = hole index for plate p
+let selectedNode = null;
+
+function initPins(){
+  const prev = pinPositions.slice();
+  pinPositions = [];
+  for(let p=1;p<=numPlates;p++){
+    let v = prev[p-1];
+    if(!v || v>numHoles) v = centerOf(numHoles);
+    pinPositions.push(v);
+  }
+}
+
+function setPin(p,h){
+  pinPositions[p-1]=h;
+  renderLock();
+}
+
+const NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs){
+  const el = document.createElementNS(NS, tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+// Fixed horizontal pin-line: the pick stays put, each plate (a column)
+// slides UP/DOWN past it. Plate 1 = leftmost column; relation nodes sit
+// in a row above the columns; brass arcs bulge up, red arcs mirror down.
+const ARC = {base:15, step:13, nodeR:12, labelPad:12};
+
+// Minimum bulge so a quadratic arc spanning `span` plates clears the
+// intermediate node circles: at the intermediate nearest an endpoint
+// (t=1/span) the arc's offset is 2t(1-t)*bulge, and it must exceed nodeR+5.
+function clearBase(span){
+  if(span<2) return ARC.base;
+  const f = 2*(span-1)/(span*span);
+  return Math.max(ARC.base, Math.ceil((ARC.nodeR+8)/f));
+}
+
+function computeLayout(arcSpace){
+  const holeSpacing = 30;
+  const colGap = 40;
+  const marginLeft = 20;
+  const marginRight = 20;
+  const nodeR = ARC.nodeR;
+  const arrowGap = 12;
+  const arrowClearance = 22; // extra room so the plate never slides under the arrow at its extreme position
+  const arrowSize = 8;
+  const topMargin = 16;
+  const bottomMargin = 16;
+
+  // Reserve space for a full-span arc two levels up, regardless of what's
+  // currently drawn — so adding/removing links never shifts the scheme.
+  const reserve = clearBase(numPlates-1) + 2*ARC.step;
+  const topBulge = Math.max(reserve, (arcSpace&&arcSpace.topBulge)||0);
+  const botBulge = Math.max(reserve, (arcSpace&&arcSpace.bottomBulge)||0);
+
+  const holesHalfHeight = (numHoles-1)*holeSpacing;
+
+  const nodeY = topMargin + topBulge + ARC.labelPad;
+  // red arcs dip below the node row by bulge/2 at their peak
+  const belowNodeDip = botBulge/2 + 14;
+  const topArrowY = nodeY + nodeR + Math.max(arrowGap, belowNodeDip) + arrowSize;
+  const centerY = topArrowY + arrowClearance + holesHalfHeight;
+  const bottomArrowY = centerY + holesHalfHeight + arrowClearance;
+  const height = bottomArrowY + arrowSize + bottomMargin;
+  const width = marginLeft + (numPlates-1)*colGap + marginRight;
+
+  return {holeSpacing,colGap,marginLeft,marginRight,nodeR,arrowGap,arrowSize,
+          topArrowY,centerY,bottomArrowY,nodeY,width,height};
+}
+function colX(p,L){ return L.marginLeft + (p-1)*L.colGap; } // plate 1 at left
+function holeScreenY(k,h,L){ return L.centerY + (k-h)*L.holeSpacing; }
+
+// Assigns each relation a "floor" (greedy interval coloring, so overlapping
+// spans never share a height) and computes its final bulge: span-dependent
+// base (to clear intermediate node circles) + floor increment. Brass and red
+// arcs are leveled separately — they live on opposite sides of the node row.
+function computeArcLevels(){
+  const same = [], opp = [];
+  for(let i=1;i<=numPlates;i++){
+    for(let j=1;j<=numPlates;j++){
+      if(i===j) continue;
+      const v = relations[keyOf(i,j)];
+      if(!v) continue;
+      (v===1?same:opp).push({i,j,a:Math.min(i,j),b:Math.max(i,j)});
+    }
+  }
+
+  function assign(edges){
+    edges.sort((e1,e2)=> (e1.b-e1.a)-(e2.b-e2.a) || e1.a-e2.a);
+    const bulges = {};
+    const floors = [];
+    let maxBulge = 0;
+    edges.forEach(e=>{
+      let lvl = 0;
+      while(true){
+        const occupied = floors[lvl];
+        const conflict = occupied && occupied.some(iv => Math.max(iv.a,e.a) < Math.min(iv.b,e.b));
+        if(!conflict) break;
+        lvl++;
+      }
+      if(!floors[lvl]) floors[lvl] = [];
+      floors[lvl].push({a:e.a,b:e.b});
+      const bulge = clearBase(e.b-e.a) + lvl*ARC.step;
+      bulges[keyOf(e.i,e.j)] = bulge;
+      if(bulge>maxBulge) maxBulge=bulge;
+    });
+    return {bulges, maxBulge};
+  }
+
+  const s = assign(same), o = assign(opp);
+  return {bulges:{...s.bulges, ...o.bulges}, topBulge:s.maxBulge, bottomBulge:o.maxBulge};
+}
+
+// Up-pointing triangle when dir<0, down-pointing when dir>0.
+function arrowPolygonPointsV(cx,cy,size,dir){
+  if(dir<0) return `${cx-size},${cy+size} ${cx},${cy-size} ${cx+size},${cy+size}`;
+  return `${cx-size},${cy-size} ${cx},${cy+size} ${cx+size},${cy-size}`;
+}
+
+function stepPin(p,delta){
+  let v = pinPositions[p-1]+delta;
+  if(v<1) v=1;
+  if(v>numHoles) v=numHoles;
+  pinPositions[p-1]=v;
+  renderLock();
+}
+
+// --- drag-to-slide ---
+let dragState = null;
+
+function getPointerY(e){
+  const svg = document.getElementById('lockSvg');
+  const rect = svg.getBoundingClientRect();
+  const vb = (svg.getAttribute('viewBox')||'0 0 100 100').split(/\s+/).map(Number);
+  const scaleY = rect.height ? (vb[3]/rect.height) : 1;
+  const clientY = (e.touches && e.touches.length) ? e.touches[0].clientY : e.clientY;
+  return (clientY-rect.top)*scaleY + vb[1];
+}
+
+function startDrag(e,p){
+  e.preventDefault();
+  dragState = {plate:p, startY:getPointerY(e), startH:pinPositions[p-1]};
+  window.addEventListener('pointermove', onDragMove);
+  window.addEventListener('pointerup', onDragEnd);
+}
+
+function onDragMove(e){
+  if(!dragState) return;
+  const L = computeLayout();
+  const deltaY = getPointerY(e) - dragState.startY;
+  // dragging DOWN (deltaY>0) must move the plate DOWN -> h decreases
+  const steps = Math.round(deltaY / L.holeSpacing);
+  let h = dragState.startH - steps;
+  if(h<1) h=1;
+  if(h>numHoles) h=numHoles;
+  if(pinPositions[dragState.plate-1] !== h){
+    pinPositions[dragState.plate-1] = h;
+    renderLock();
+  }
+}
+
+function onDragEnd(){
+  dragState = null;
+  window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener('pointerup', onDragEnd);
+}
+
+function addArcEdge(svg,i,j,L,bulges){
+  const val = relations[keyOf(i,j)];
+  if(!val) return;
+  const xi = colX(i,L), xj = colX(j,L);
+  const bulge = bulges[keyOf(i,j)] || ARC.base;
+  const cx = (xi+xj)/2;
+  // both arc types attach to the same P-node circles; brass bulges up, red is mirrored down
+  const cy = (val===1) ? L.nodeY - bulge : L.nodeY + bulge;
+  const path = svgEl('path',{
+    class:'lock-edge '+(val===1?'same':'opp'),
+    d:`M${xi},${L.nodeY} Q${cx},${cy} ${xj},${L.nodeY}`,
+    fill:'none'
+  });
+  path.addEventListener('click', ()=>cycleEdge(i,j));
+  svg.appendChild(path);
+  // direction arrowhead at the arc's peak; at t=0.5 the tangent is horizontal,
+  // pointing from the mover (i) toward the follower (j)
+  const py = (L.nodeY + cy)/2;
+  const s = (xj > xi) ? 1 : -1;
+  const arrow = svgEl('polygon',{
+    class:'edge-arrow '+(val===1?'same':'opp'),
+    points:`${cx+6*s},${py} ${cx-5*s},${py-4.5} ${cx-5*s},${py+4.5}`
+  });
+  svg.appendChild(arrow);
+}
+
+function renderLock(){
+  const svg = document.getElementById('lockSvg');
+  svg.innerHTML='';
+  const arcInfo = computeArcLevels();
+  const L = computeLayout({topBulge:arcInfo.topBulge, bottomBulge:arcInfo.bottomBulge});
+  svg.setAttribute('viewBox', `0 0 ${L.width} ${L.height}`);
+
+  // pin the reset buttons to the scheme's own axes: sequences at the node row,
+  // plates at the pick line; both share the same right-side column
+  const seqBtn = document.getElementById('resetSeqBtn');
+  const platesBtn = document.getElementById('resetPlatesBtn');
+  if(seqBtn && platesBtn){
+    seqBtn.style.top = (L.nodeY / L.height * 100) + '%';
+    platesBtn.style.top = (L.centerY / L.height * 100) + '%';
+  }
+
+  const leftX = colX(1,L);
+  const rightX = colX(numPlates,L);
+
+  // fixed pin line — this never moves; plates slide past it
+  svg.appendChild(svgEl('line',{
+    class:'pin-line', x1:leftX-14, y1:L.centerY, x2:rightX+14, y2:L.centerY
+  }));
+
+  // relation arcs behind everything
+  for(let i=1;i<=numPlates;i++){
+    for(let j=1;j<=numPlates;j++){
+      if(i===j) continue;
+      addArcEdge(svg,i,j,L,arcInfo.bulges);
+    }
+  }
+
+  const center = centerOf(numHoles);
+
+  for(let p=1;p<=numPlates;p++){
+    const x = colX(p,L);
+    const h = pinPositions[p-1];
+
+    const yStart = holeScreenY(1,h,L);
+    const yEnd = holeScreenY(numHoles,h,L);
+
+    // invisible drag handle spanning the whole column (catches empty-space grabs)
+    const hit = svgEl('rect',{
+      class:'drag-hit',
+      x:x-14, y:L.topArrowY-6, width:28, height:(L.bottomArrowY-L.topArrowY)+12,
+      fill:'transparent'
+    });
+    hit.addEventListener('pointerdown', (e)=>startDrag(e,p));
+    svg.appendChild(hit);
+
+    const bar = svgEl('line',{class:'plate-bar', x1:x, y1:yStart-9, x2:x, y2:yEnd+9});
+    bar.addEventListener('pointerdown', (e)=>startDrag(e,p));
+    svg.appendChild(bar);
+
+    for(let k=1;k<=numHoles;k++){
+      const hy = holeScreenY(k,h,L);
+      const isCurrent = (k===h);
+      const isGoalHole = (k===center);
+      let cls = 'hole-circle';
+      if(isCurrent) cls+=' pin';
+      else if(isGoalHole) cls+=' center-hint';
+      const circle = svgEl('circle',{class:cls, cx:x, cy:hy, r:isCurrent?8.5:6.5});
+      // pointerdown-and-hold here starts a drag; a plain click (no movement) still jumps here
+      circle.addEventListener('pointerdown', (e)=>startDrag(e,p));
+      circle.addEventListener('click', ()=>setPin(p,k));
+      svg.appendChild(circle);
+    }
+    if(h===center){
+      svg.appendChild(svgEl('circle',{class:'solved-ring', cx:x, cy:L.centerY, r:13}));
+    }
+
+    // up arrow -> h+1 (moves column up); down arrow -> h-1 (moves column down)
+    const upArrow = svgEl('polygon',{class:'slide-arrow', points:arrowPolygonPointsV(x,L.topArrowY,L.arrowSize,-1)});
+    upArrow.addEventListener('click', ()=>stepPin(p,1));
+    svg.appendChild(upArrow);
+    const downArrow = svgEl('polygon',{class:'slide-arrow', points:arrowPolygonPointsV(x,L.bottomArrowY,L.arrowSize,1)});
+    downArrow.addEventListener('click', ()=>stepPin(p,-1));
+    svg.appendChild(downArrow);
+
+    const nodeCircle = svgEl('circle',{
+      class:'plate-node'+(selectedNode===p?' selected':''),
+      cx:x, cy:L.nodeY, r:L.nodeR
+    });
+    nodeCircle.addEventListener('click', ()=>handleNodeClick(p));
+    const nodeLabel = svgEl('text',{class:'node-label-sm', x:x, y:L.nodeY});
+    nodeLabel.textContent = 'P'+p;
+    svg.appendChild(nodeCircle);
+    svg.appendChild(nodeLabel);
+  }
+
+}
+
+function handleNodeClick(plateNum){
+  if(selectedNode===null){
+    selectedNode = plateNum;
+  } else if(selectedNode===plateNum){
+    selectedNode = null;
+  } else {
+    cycleEdge(selectedNode, plateNum);
+    return; // keep selection for chaining, renderLock called inside cycleEdge
+  }
+  renderLock();
+}
+
+function deselectNode(){
+  selectedNode = null;
+  renderLock();
+}
+
+function cycleEdge(i,j){
+  const k = keyOf(i,j);
+  const cur = relations[k]||0;
+  const next = cur===0?1:(cur===1?-1:0);
+  if(next===0) delete relations[k]; else relations[k]=next;
+  renderLock();
+}
+
+function runSolve(){
+  const start = pinPositions.slice();
+  const target = centerOf(numHoles);
+  const goal = Array(numPlates).fill(target);
+
+  // build delta function: moving plate p (1-indexed) by d affects itself + relations
+  function applyMove(state, plate, d){
+    const ns = state.slice();
+    ns[plate-1]+=d;
+    for(let j=1;j<=numPlates;j++){
+      if(j===plate) continue;
+      const rel = relations[keyOf(plate,j)];
+      if(rel) ns[j-1]+=rel*d;
+    }
+    for(let v of ns){ if(v<1||v>numHoles) return null; }
+    return ns;
+  }
+
+  const resDiv = document.getElementById('result');
+  if(JSON.stringify(start)===JSON.stringify(goal)){
+    resDiv.innerHTML = `<div class="status ok">All plates are already centered — the lock should open right now.</div>`;
+    return;
+  }
+
+  resDiv.innerHTML = `<div class="status ok">Calculating…</div>`;
+
+  setTimeout(()=>{
+    const startKey = start.join(',');
+    const goalKey = goal.join(',');
+    const visited = new Map();
+    visited.set(startKey, null);
+    let queue = [start];
+    let qi = 0;
+    let found = false;
+    let iterations = 0;
+    const MAX_STATES = 4000000;
+
+    while(qi<queue.length){
+      const s = queue[qi++];
+      const sk = s.join(',');
+      if(sk===goalKey){ found=true; break; }
+      for(let plate=1;plate<=numPlates;plate++){
+        for(const d of [1,-1]){
+          const ns = applyMove(s, plate, d);
+          if(!ns) continue;
+          const nk = ns.join(',');
+          if(!visited.has(nk)){
+            visited.set(nk, {prev:sk, plate, d});
+            queue.push(ns);
+            iterations++;
+            if(iterations>MAX_STATES){ break; }
+          }
+        }
+      }
+      if(iterations>MAX_STATES) break;
+    }
+
+    if(!found){
+      resDiv.innerHTML = `<div class="status err">No solution exists with these links — one of them is probably set in the wrong direction. Re-check links where a single plate pulls several others.</div>`;
+      return;
+    }
+
+    // backtrack
+    const path = [];
+    let curKey = goalKey;
+    while(curKey!==startKey){
+      const rec = visited.get(curKey);
+      path.push({plate:rec.plate, d:rec.d});
+      curKey = rec.prev;
+    }
+    path.reverse();
+
+    renderResult(path);
+  }, 30);
+}
+
+function renderResult(path){
+  const resDiv = document.getElementById('result');
+  const total = path.length;
+
+  // group consecutive same plate+dir
+  const grouped = [];
+  for(const mv of path){
+    const last = grouped[grouped.length-1];
+    if(last && last.plate===mv.plate && last.d===mv.d){
+      last.count++;
+    } else {
+      grouped.push({plate:mv.plate, d:mv.d, count:1});
+    }
+  }
+
+  function dirLabel(d){
+    // d=+1 moves the plate UP in the scheme (▲); d=-1 moves it DOWN (▼)
+    const isUp = d===1;
+    return {key: isUp ? 'L' : 'R', arrow: isUp ? '▲' : '▼'};
+  }
+
+  let html = `<div class="status ok">Done — ${total} moves.</div>`;
+  html += `<ul class="move-list">`;
+  let plainText = [];
+  grouped.forEach(g=>{
+    const d = dirLabel(g.d);
+    html += `<li>
+      <span class="move-plate">Plate ${g.plate}</span>
+      <span class="move-dir ${d.arrow==='▼'?'neg':''}">${d.key} ${d.arrow}</span>
+      ${g.count>1?`<span class="move-x">× ${g.count}</span>`:''}
+    </li>`;
+    plainText.push(`Plate ${g.plate} → ${d.key} ${d.arrow}${g.count>1?' ×'+g.count:''}`);
+  });
+  html += `</ul>`;
+  html += `<div class="result-actions">
+    <button class="ghost-btn" onclick="copyResult()">Copy list</button>
+    <button class="ghost-btn" onclick="document.getElementById('result').innerHTML=''">Hide</button>
+  </div>`;
+  resDiv.innerHTML = html;
+  resDiv.dataset.plain = plainText.join('\n');
+}
+
+function copyResult(){
+  const text = document.getElementById('result').dataset.plain || '';
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = event.target;
+    const old = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(()=>btn.textContent=old, 1400);
+  });
+}
+
+// init
+renderHolesRow();
+initPins();
+renderLock();
+</script>
+</body>
+</html>
