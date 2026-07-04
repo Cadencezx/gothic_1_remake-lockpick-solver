@@ -66,24 +66,43 @@
   }
   .panel .hint{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.5;}
 
-  /* CONFIG ROW */
-  .config-row{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;margin-bottom:4px;}
-  .field{display:flex;flex-direction:column;gap:6px;}
-  .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
-  .stepper{display:flex;align-items:center;border:1px solid var(--steel-dim);border-radius:8px;overflow:hidden;background:#150f0a;}
-  .stepper button{
-    background:#241c13;color:var(--brass-bright);border:none;width:30px;height:32px;
-    font-size:16px;cursor:pointer;transition:background .15s;
+  /* PLATE CONFIG BUTTONS */
+  .plate-config-row{
+    display:flex;
+    gap:12px;
+    margin-top:14px;
+    flex-wrap:wrap;
   }
-  .stepper button:hover{background:#33281a;}
-  .stepper input{
-    width:44px;text-align:center;background:transparent;border:none;color:var(--parchment);
-    font-family:'JetBrains Mono',monospace;font-size:15px;-moz-appearance:textfield;
+  .plate-config-btn{
+    flex:1 1 0;
+    min-width:80px;
+    padding:14px 0;
+    background:#1c150d;
+    border:1px solid var(--steel-dim);
+    border-radius:10px;
+    color:var(--parchment);
+    font-family:'Cinzel',serif;
+    font-size:20px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .15s;
+    text-align:center;
+    line-height:1.2;
   }
-  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .plate-config-btn:hover{
+    border-color:var(--brass-bright);
+    background:#2c2210;
+    color:var(--brass-bright);
+  }
+  .plate-config-btn.active{
+    border-color:var(--brass);
+    background:linear-gradient(180deg,var(--brass-bright),var(--brass));
+    color:#20160a;
+    box-shadow:0 0 12px rgba(192,138,62,.25);
+  }
 
   .lock-area{display:flex;align-items:center;justify-content:center;}
-  .lock-area .lock-wrap{position:relative;margin:10px 0 0;overflow:visible;}
+  .lock-area .lock-wrap{position:relative;margin:10px auto 0;overflow:visible; text-align:center;}
   .reset-btn{
     position:absolute;right:-100px;transform:translateY(-50%);
     width:86px;height:104px;border-radius:12px;
@@ -103,8 +122,15 @@
     max-width:360px;
     margin:10px auto 0;
     overflow-x:auto;
+    text-align:center;
   }
-  #lockSvg{width:100%;height:auto;display:block;min-width:220px;}
+  #lockSvg{
+    display:block;
+    max-width:100%;
+    height:auto;
+    margin:0 auto;
+    /* min-width удалён, чтобы не растягивать маленькие схемы */
+  }
   .plate-bar{stroke:#453a28;stroke-width:15;stroke-linecap:round;cursor:ns-resize;touch-action:none;}
   .drag-hit{cursor:ns-resize;touch-action:none;}
   .pin-line{stroke:var(--brass-bright);stroke-width:2;opacity:.5;}
@@ -185,7 +211,7 @@
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
   @media (max-width:520px){
-    .config-row{gap:14px;}
+    .plate-config-btn{font-size:18px;padding:12px 0;}
   }
 </style>
 </head>
@@ -200,23 +226,11 @@
 
   <div class="panel">
     <h2>Lock Setup</h2>
-    <div class="config-row">
-      <div class="field">
-        <label>Plates</label>
-        <div class="stepper">
-          <button type="button" onclick="changePlates(-1)">−</button>
-          <input id="plateCount" type="number" value="5" min="2" max="8" readonly>
-          <button type="button" onclick="changePlates(1)">+</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>Holes</label>
-        <div class="stepper">
-          <button type="button" onclick="changeHoles(-1)">−</button>
-          <input id="holeCount" type="number" value="7" min="3" max="9" readonly>
-          <button type="button" onclick="changeHoles(1)">+</button>
-        </div>
-      </div>
+    <div class="plate-config-row" id="plateConfigRow">
+      <button class="plate-config-btn" data-plates="4">4</button>
+      <button class="plate-config-btn" data-plates="5">5</button>
+      <button class="plate-config-btn active" data-plates="6">6</button>
+      <button class="plate-config-btn" data-plates="7">7</button>
     </div>
   </div>
 
@@ -246,9 +260,9 @@
 </div>
 
 <script>
-let numPlates = 5;
-let numHoles = 7;
-let relations = {}; // "i-j" -> 1 or -1
+let numPlates = 6;        // default
+let numHoles = 7;         // fixed
+let relations = {};
 
 function keyOf(i,j){return i+'-'+j;}
 
@@ -264,12 +278,6 @@ function resetSequences(){
   renderLock();
 }
 
-function resetLock(){ // full reset, kept for programmatic use
-  resetSequences();
-  resetPlates();
-  document.getElementById('result').innerHTML='';
-}
-
 function renderHolesRow(){
   const row = document.getElementById('holesRow');
   row.innerHTML='';
@@ -280,12 +288,9 @@ function renderHolesRow(){
   }
 }
 
-function changePlates(delta){
-  const ni = numPlates+delta;
-  if(ni<2||ni>8) return;
-  numPlates = ni;
-  document.getElementById('plateCount').value = numPlates;
-  // drop relations referencing removed plate
+function selectPlates(n){
+  if(n===numPlates) return;
+  numPlates = n;
   Object.keys(relations).forEach(k=>{
     const [a,b]=k.split('-').map(Number);
     if(a>numPlates||b>numPlates) delete relations[k];
@@ -293,20 +298,22 @@ function changePlates(delta){
   if(selectedNode>numPlates) selectedNode=null;
   initPins();
   renderLock();
+  document.querySelectorAll('.plate-config-btn').forEach(btn=>{
+    const plates = parseInt(btn.dataset.plates,10);
+    btn.classList.toggle('active', plates===numPlates);
+  });
 }
 
-function changeHoles(delta){
-  const nh = numHoles+delta;
-  if(nh<3||nh>9) return;
-  numHoles = nh;
-  document.getElementById('holeCount').value = numHoles;
-  initPins();
-  renderLock();
-}
+document.querySelectorAll('.plate-config-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const plates = parseInt(btn.dataset.plates,10);
+    selectPlates(plates);
+  });
+});
 
 function centerOf(h){ return Math.ceil((h+1)/2); }
 
-let pinPositions = []; // pinPositions[p-1] = hole index for plate p
+let pinPositions = [];
 let selectedNode = null;
 
 function initPins(){
@@ -331,14 +338,8 @@ function svgEl(tag, attrs){
   return el;
 }
 
-// Fixed horizontal pin-line: the pick stays put, each plate (a column)
-// slides UP/DOWN past it. Plate 1 = leftmost column; relation nodes sit
-// in a row above the columns; brass arcs bulge up, red arcs mirror down.
 const ARC = {base:15, step:13, nodeR:12, labelPad:12};
 
-// Minimum bulge so a quadratic arc spanning `span` plates clears the
-// intermediate node circles: at the intermediate nearest an endpoint
-// (t=1/span) the arc's offset is 2t(1-t)*bulge, and it must exceed nodeR+5.
 function clearBase(span){
   if(span<2) return ARC.base;
   const f = 2*(span-1)/(span*span);
@@ -352,13 +353,11 @@ function computeLayout(arcSpace){
   const marginRight = 20;
   const nodeR = ARC.nodeR;
   const arrowGap = 12;
-  const arrowClearance = 22; // extra room so the plate never slides under the arrow at its extreme position
+  const arrowClearance = 22;
   const arrowSize = 8;
   const topMargin = 16;
   const bottomMargin = 16;
 
-  // Reserve space for a full-span arc two levels up, regardless of what's
-  // currently drawn — so adding/removing links never shifts the scheme.
   const reserve = clearBase(numPlates-1) + 2*ARC.step;
   const topBulge = Math.max(reserve, (arcSpace&&arcSpace.topBulge)||0);
   const botBulge = Math.max(reserve, (arcSpace&&arcSpace.bottomBulge)||0);
@@ -366,7 +365,6 @@ function computeLayout(arcSpace){
   const holesHalfHeight = (numHoles-1)*holeSpacing;
 
   const nodeY = topMargin + topBulge + ARC.labelPad;
-  // red arcs dip below the node row by bulge/2 at their peak
   const belowNodeDip = botBulge/2 + 14;
   const topArrowY = nodeY + nodeR + Math.max(arrowGap, belowNodeDip) + arrowSize;
   const centerY = topArrowY + arrowClearance + holesHalfHeight;
@@ -377,13 +375,9 @@ function computeLayout(arcSpace){
   return {holeSpacing,colGap,marginLeft,marginRight,nodeR,arrowGap,arrowSize,
           topArrowY,centerY,bottomArrowY,nodeY,width,height};
 }
-function colX(p,L){ return L.marginLeft + (p-1)*L.colGap; } // plate 1 at left
+function colX(p,L){ return L.marginLeft + (p-1)*L.colGap; }
 function holeScreenY(k,h,L){ return L.centerY + (k-h)*L.holeSpacing; }
 
-// Assigns each relation a "floor" (greedy interval coloring, so overlapping
-// spans never share a height) and computes its final bulge: span-dependent
-// base (to clear intermediate node circles) + floor increment. Brass and red
-// arcs are leveled separately — they live on opposite sides of the node row.
 function computeArcLevels(){
   const same = [], opp = [];
   for(let i=1;i<=numPlates;i++){
@@ -421,7 +415,6 @@ function computeArcLevels(){
   return {bulges:{...s.bulges, ...o.bulges}, topBulge:s.maxBulge, bottomBulge:o.maxBulge};
 }
 
-// Up-pointing triangle when dir<0, down-pointing when dir>0.
 function arrowPolygonPointsV(cx,cy,size,dir){
   if(dir<0) return `${cx-size},${cy+size} ${cx},${cy-size} ${cx+size},${cy+size}`;
   return `${cx-size},${cy-size} ${cx},${cy+size} ${cx+size},${cy-size}`;
@@ -435,7 +428,6 @@ function stepPin(p,delta){
   renderLock();
 }
 
-// --- drag-to-slide ---
 let dragState = null;
 
 function getPointerY(e){
@@ -458,7 +450,6 @@ function onDragMove(e){
   if(!dragState) return;
   const L = computeLayout();
   const deltaY = getPointerY(e) - dragState.startY;
-  // dragging DOWN (deltaY>0) must move the plate DOWN -> h decreases
   const steps = Math.round(deltaY / L.holeSpacing);
   let h = dragState.startH - steps;
   if(h<1) h=1;
@@ -481,7 +472,6 @@ function addArcEdge(svg,i,j,L,bulges){
   const xi = colX(i,L), xj = colX(j,L);
   const bulge = bulges[keyOf(i,j)] || ARC.base;
   const cx = (xi+xj)/2;
-  // both arc types attach to the same P-node circles; brass bulges up, red is mirrored down
   const cy = (val===1) ? L.nodeY - bulge : L.nodeY + bulge;
   const path = svgEl('path',{
     class:'lock-edge '+(val===1?'same':'opp'),
@@ -490,8 +480,6 @@ function addArcEdge(svg,i,j,L,bulges){
   });
   path.addEventListener('click', ()=>cycleEdge(i,j));
   svg.appendChild(path);
-  // direction arrowhead at the arc's peak; at t=0.5 the tangent is horizontal,
-  // pointing from the mover (i) toward the follower (j)
   const py = (L.nodeY + cy)/2;
   const s = (xj > xi) ? 1 : -1;
   const arrow = svgEl('polygon',{
@@ -507,9 +495,9 @@ function renderLock(){
   const arcInfo = computeArcLevels();
   const L = computeLayout({topBulge:arcInfo.topBulge, bottomBulge:arcInfo.bottomBulge});
   svg.setAttribute('viewBox', `0 0 ${L.width} ${L.height}`);
+  svg.setAttribute('width', L.width);
+  svg.setAttribute('height', L.height);
 
-  // pin the reset buttons to the scheme's own axes: sequences at the node row,
-  // plates at the pick line; both share the same right-side column
   const seqBtn = document.getElementById('resetSeqBtn');
   const platesBtn = document.getElementById('resetPlatesBtn');
   if(seqBtn && platesBtn){
@@ -520,12 +508,10 @@ function renderLock(){
   const leftX = colX(1,L);
   const rightX = colX(numPlates,L);
 
-  // fixed pin line — this never moves; plates slide past it
   svg.appendChild(svgEl('line',{
     class:'pin-line', x1:leftX-14, y1:L.centerY, x2:rightX+14, y2:L.centerY
   }));
 
-  // relation arcs behind everything
   for(let i=1;i<=numPlates;i++){
     for(let j=1;j<=numPlates;j++){
       if(i===j) continue;
@@ -542,7 +528,6 @@ function renderLock(){
     const yStart = holeScreenY(1,h,L);
     const yEnd = holeScreenY(numHoles,h,L);
 
-    // invisible drag handle spanning the whole column (catches empty-space grabs)
     const hit = svgEl('rect',{
       class:'drag-hit',
       x:x-14, y:L.topArrowY-6, width:28, height:(L.bottomArrowY-L.topArrowY)+12,
@@ -563,7 +548,6 @@ function renderLock(){
       if(isCurrent) cls+=' pin';
       else if(isGoalHole) cls+=' center-hint';
       const circle = svgEl('circle',{class:cls, cx:x, cy:hy, r:isCurrent?8.5:6.5});
-      // pointerdown-and-hold here starts a drag; a plain click (no movement) still jumps here
       circle.addEventListener('pointerdown', (e)=>startDrag(e,p));
       circle.addEventListener('click', ()=>setPin(p,k));
       svg.appendChild(circle);
@@ -572,7 +556,6 @@ function renderLock(){
       svg.appendChild(svgEl('circle',{class:'solved-ring', cx:x, cy:L.centerY, r:13}));
     }
 
-    // up arrow -> h+1 (moves column up); down arrow -> h-1 (moves column down)
     const upArrow = svgEl('polygon',{class:'slide-arrow', points:arrowPolygonPointsV(x,L.topArrowY,L.arrowSize,-1)});
     upArrow.addEventListener('click', ()=>stepPin(p,1));
     svg.appendChild(upArrow);
@@ -590,7 +573,6 @@ function renderLock(){
     svg.appendChild(nodeCircle);
     svg.appendChild(nodeLabel);
   }
-
 }
 
 function handleNodeClick(plateNum){
@@ -600,13 +582,8 @@ function handleNodeClick(plateNum){
     selectedNode = null;
   } else {
     cycleEdge(selectedNode, plateNum);
-    return; // keep selection for chaining, renderLock called inside cycleEdge
+    return;
   }
-  renderLock();
-}
-
-function deselectNode(){
-  selectedNode = null;
   renderLock();
 }
 
@@ -623,7 +600,6 @@ function runSolve(){
   const target = centerOf(numHoles);
   const goal = Array(numPlates).fill(target);
 
-  // build delta function: moving plate p (1-indexed) by d affects itself + relations
   function applyMove(state, plate, d){
     const ns = state.slice();
     ns[plate-1]+=d;
@@ -680,7 +656,6 @@ function runSolve(){
       return;
     }
 
-    // backtrack
     const path = [];
     let curKey = goalKey;
     while(curKey!==startKey){
@@ -698,7 +673,6 @@ function renderResult(path){
   const resDiv = document.getElementById('result');
   const total = path.length;
 
-  // group consecutive same plate+dir
   const grouped = [];
   for(const mv of path){
     const last = grouped[grouped.length-1];
@@ -710,7 +684,6 @@ function renderResult(path){
   }
 
   function dirLabel(d){
-    // d=+1 moves the plate UP in the scheme (▲); d=-1 moves it DOWN (▼)
     const isUp = d===1;
     return {key: isUp ? 'L' : 'R', arrow: isUp ? '▲' : '▼'};
   }
