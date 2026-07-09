@@ -731,6 +731,7 @@ function renderStaticResult(){
 }
 
 function hideResult(){
+  if(followState)restoreToSolveStart();
   lastGrouped=null;followState=null;
   const el=document.getElementById('result');if(el)el.innerHTML='';
   renderLock();
@@ -793,10 +794,30 @@ function backFollowStep(){
   renderFollowUI();
 }
 
+function restoreToSolveStart(){
+  if(followState && followState.history && followState.history[0]){
+    pinPositions=followState.history[0].slice();
+  } else if(lastStart){
+    pinPositions=lastStart.slice();
+  }
+}
+
 function exitFollow(){
+  // Exit always returns the scheme to the state it was in right after Calculate
+  restoreToSolveStart();
   followState=null;
   renderLock();
   renderStaticResult();
+}
+
+// the full-width Back at the finished state: rewind to the very first step
+function backToStart(){
+  if(!followState||!followState.history)return;
+  pinPositions=followState.history[0].slice();
+  followState.gi=0;
+  followState.history=[pinPositions.slice()];
+  renderLock();
+  renderFollowUI();
 }
 
 // manual edits invalidate the computed path -> silently drop follow mode
@@ -848,7 +869,9 @@ function renderFollowUI(){
     status=`<div class="status ok">Step ${gi+1} of ${n}: Plate ${g.plate} — press ${key}${g.count>1?' ×'+g.count:''}<div class="status-hint">(R – Right, L – Left)</div></div>`;
   }
   const items=buildMoveItems(finished?n:gi);
-  const backBtn=`<button class="ghost-btn" onclick="backFollowStep()" ${gi===0?'disabled':''}>◀ Back</button>`;
+  const backBtn=finished
+    ?`<button class="ghost-btn" onclick="backToStart()">◀ Back to start</button>`
+    :`<button class="ghost-btn" onclick="backFollowStep()" ${gi===0?'disabled':''}>◀ Back</button>`;
   const nextBtn=finished?'':`<button class="ghost-btn follow-btn" onclick="nextFollowStep()">Next ▶</button>`;
   const exitBtn=`<button class="ghost-btn exit-live" onclick="exitFollow()">Exit</button>`;
   const copyBtn=`<button class="ghost-btn" onclick="copyResult()">Copy list</button>`;
@@ -869,6 +892,7 @@ function renderFollowUI(){
 }
 
 function clearCalcResult(){
+  if(followState)restoreToSolveStart();
   lastGrouped=null;followState=null;
   document.getElementById('calc-result').innerHTML='';
   renderLock();
