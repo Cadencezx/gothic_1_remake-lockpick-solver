@@ -177,8 +177,27 @@
   .ghost-btn{
     background:transparent;border:1px solid var(--steel-dim);color:var(--muted);
     padding:9px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:.15s;
+    white-space:nowrap;
   }
   .ghost-btn:hover{border-color:var(--brass);color:var(--brass-bright);}
+  .ghost-btn:disabled{opacity:.4;cursor:default;}
+  .ghost-btn:disabled:hover{border-color:var(--steel-dim);color:var(--muted);}
+  .follow-btn{border-color:var(--brass);color:var(--brass-bright);}
+
+  /* follow-mode step states in the move list */
+  .move-list li.done{opacity:.4;}
+  .move-list li.done::before{content:'\2713';background:#1a2418;color:#9fd695;}
+  .move-list li.active{
+    background:rgba(192,138,62,.1);
+    border:1px solid var(--brass);
+    border-radius:8px;
+    padding:8px;
+    margin:3px 0;
+  }
+
+  /* pulsing highlights drawn on the scheme in follow mode */
+  .follow-glow{animation:followPulse 1.1s ease-in-out infinite;pointer-events:none;}
+  @keyframes followPulse{0%,100%{opacity:.35}50%{opacity:1}}
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
 
@@ -252,8 +271,10 @@
       padding-top:12px;
       margin-top:8px;
       display:flex;
-      gap:10px;
+      gap:8px;
+      flex-wrap:wrap;
     }
+    .calc-result-actions .ghost-btn{flex:1;min-width:72px;padding:9px 10px;text-align:center;}
     .original-controls{display:none;}
     #mobileLockPanel{display:none;}
   }
@@ -434,8 +455,8 @@ let relations = {};
 
 function keyOf(i,j){return i+'-'+j;}
 
-function resetPlates(){pinPositions=[];initPins();renderLock();}
-function resetSequences(){relations={};selectedNode=null;renderLock();}
+function resetPlates(){invalidateFollow();pinPositions=[];initPins();renderLock();}
+function resetSequences(){invalidateFollow();relations={};selectedNode=null;renderLock();}
 
 function renderHolesRow(){
   const row=document.getElementById('holesRow');row.innerHTML='';
@@ -443,7 +464,7 @@ function renderHolesRow(){
 }
 
 function selectPlates(n){
-  if(n===numPlates)return;numPlates=n;
+  if(n===numPlates)return;invalidateFollow();numPlates=n;
   Object.keys(relations).forEach(k=>{const[a,b]=k.split('-').map(Number);if(a>numPlates||b>numPlates)delete relations[k]});
   if(selectedNode>numPlates)selectedNode=null;initPins();renderLock();
   document.querySelectorAll('.plate-config-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.plates)===numPlates));
@@ -453,7 +474,7 @@ document.querySelectorAll('.plate-config-btn').forEach(b=>b.addEventListener('cl
 function centerOf(h){return Math.ceil((h+1)/2);}
 let pinPositions=[],selectedNode=null;
 function initPins(){const p=pinPositions.slice();pinPositions=[];for(let i=1;i<=numPlates;i++){let v=p[i-1];if(!v||v>numHoles)v=centerOf(numHoles);pinPositions.push(v);}}
-function setPin(p,h){pinPositions[p-1]=h;renderLock();}
+function setPin(p,h){invalidateFollow();pinPositions[p-1]=h;renderLock();}
 
 const NS='http://www.w3.org/2000/svg';
 function svgEl(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
@@ -572,6 +593,30 @@ function renderLock(){
     const label=svgEl('text',{class:'node-label-sm',x:x,y:L.nodeY});label.textContent='P'+p;
     svg.appendChild(node);svg.appendChild(label);
   }
+
+  // ----- follow-mode overlay: highlight the plate to move and its target hole -----
+  if(followState && lastGrouped && followState.gi < lastGrouped.length){
+    const g = lastGrouped[followState.gi];
+    if(g.plate <= numPlates){
+      const x = colX(g.plate,L), h = pinPositions[g.plate-1];
+      const ys = holeScreenY(1,h,L), ye = holeScreenY(numHoles,h,L);
+      // pulsing outline around the whole plate
+      svg.appendChild(svgEl('rect',{class:'follow-glow',x:x-14,y:ys-21,width:28,height:(ye-ys)+42,rx:14,
+        fill:'none',stroke:'var(--brass-bright)','stroke-width':2.5}));
+      // ring + chevron on the hole that must be brought to the pick line
+      const kd = h + g.d*g.count;
+      if(kd>=1 && kd<=numHoles){
+        const hy = holeScreenY(kd,h,L);
+        svg.appendChild(svgEl('circle',{class:'follow-glow',cx:x,cy:hy,r:12,fill:'none',
+          stroke:'var(--brass-bright)','stroke-width':2,'stroke-dasharray':'3 3'}));
+        const up = hy > L.centerY; // hole below the line -> plate slides up
+        const pts = up
+          ? `${x-4.5},${hy+3.5} ${x},${hy-4.5} ${x+4.5},${hy+3.5}`
+          : `${x-4.5},${hy-3.5} ${x},${hy+4.5} ${x+4.5},${hy-3.5}`;
+        svg.appendChild(svgEl('polygon',{class:'follow-glow',points:pts,fill:'var(--brass-bright)'}));
+      }
+    }
+  }
 }
 
 function handleNodeClick(p){
@@ -579,11 +624,13 @@ function handleNodeClick(p){
   else{cycleEdge(selectedNode,p);return;}renderLock();
 }
 function cycleEdge(i,j){
+  invalidateFollow();
   const k=keyOf(i,j),cur=relations[k]||0,nxt=cur===0?1:(cur===1?-1:0);
   if(nxt===0)delete relations[k];else relations[k]=nxt;renderLock();
 }
 
 function runSolve(){
+  invalidateFollow(true);
   const start=pinPositions.slice(),target=centerOf(numHoles),goal=Array(numPlates).fill(target);
   function applyMove(s,p,d){const ns=s.slice();ns[p-1]+=d;for(let j=1;j<=numPlates;j++){if(j===p)continue;const r=relations[keyOf(p,j)];if(r)ns[j-1]+=r*d;}for(let v of ns)if(v<1||v>numHoles)return null;return ns;}
 
@@ -606,31 +653,149 @@ function runSolve(){
   },30);
 }
 
-function renderResult(path,container,isDesktop){
-  const total=path.length,grouped=[];
-  for(const mv of path){const last=grouped[grouped.length-1];if(last&&last.plate===mv.plate&&last.d===mv.d)last.count++;else grouped.push({plate:mv.plate,d:mv.d,count:1});}
-  function dl(d){return{key:d===1?'L':'R'};}
-  let html = `<div class="status ok">Done — ${total} moves.<div class="status-hint">(R – Right, L – Left)</div></div>`;
+// ================= result rendering & follow mode =================
+let lastGrouped=null, lastTotal=0, followState=null;
 
+function dirKey(d){return d===1?'L':'R';}
+
+function activeResultContainer(){
+  const isDesktop=window.matchMedia('(min-width:901px)').matches;
+  return {container:document.getElementById(isDesktop?'calc-result':'result'), isDesktop};
+}
+
+function buildMoveItems(activeIdx){
+  // activeIdx: -1 = plain list; otherwise steps < activeIdx are done, == is active
   let items='';
-  const pt=[];
-  grouped.forEach(g=>{
-    const d=dl(g.d);
-    items+=`<li><span class="move-plate">Plate ${g.plate}</span><span class="move-dir ${d.key==='R'?'neg':''}">${d.key}</span>${g.count>1?`<span class="move-x">× ${g.count}</span>`:''}</li>`;
-    pt.push(`Plate ${g.plate} → ${d.key}${g.count>1?' ×'+g.count:''}`);
+  lastGrouped.forEach((g,idx)=>{
+    const key=dirKey(g.d);
+    let cls='';
+    if(activeIdx>=0){ if(idx<activeIdx)cls='done'; else if(idx===activeIdx)cls='active'; }
+    items+=`<li class="${cls}"><span class="move-plate">Plate ${g.plate}</span><span class="move-dir ${key==='R'?'neg':''}">${key}</span>${g.count>1?`<span class="move-x">× ${g.count}</span>`:''}</li>`;
   });
+  return items;
+}
 
+function renderResult(path,container,isDesktop){
+  lastTotal=path.length;
+  lastGrouped=[];
+  for(const mv of path){const last=lastGrouped[lastGrouped.length-1];if(last&&last.plate===mv.plate&&last.d===mv.d)last.count++;else lastGrouped.push({plate:mv.plate,d:mv.d,count:1});}
+  const pt=lastGrouped.map(g=>`Plate ${g.plate} → ${dirKey(g.d)}${g.count>1?' ×'+g.count:''}`);
+  container.dataset.plain=pt.join('\n');
+  renderStaticResult();
+}
+
+function renderStaticResult(){
+  if(!lastGrouped) return;
+  const {container,isDesktop}=activeResultContainer();
+  if(!container) return;
+  let html=`<div class="status ok">Done — ${lastTotal} moves.<div class="status-hint">(R – Right, L – Left)</div></div>`;
+  const items=buildMoveItems(-1);
+  const followBtn=`<button class="ghost-btn follow-btn" onclick="startFollow()">Follow ▶</button>`;
   if(isDesktop){
-    html += `<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions"><button class="ghost-btn" onclick="copyResult()">Copy list</button><button class="ghost-btn" onclick="clearCalcResult()">Hide</button></div>`;
-  } else {
-    html += `<ul class="move-list">${items}</ul><div class="result-actions"><button class="ghost-btn" onclick="copyResult()">Copy list</button><button class="ghost-btn" onclick="document.getElementById('result').innerHTML=''">Hide</button></div>`;
+    html+=`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${followBtn}<button class="ghost-btn" onclick="copyResult()">Copy list</button><button class="ghost-btn" onclick="clearCalcResult()">Hide</button></div>`;
+  }else{
+    html+=`<ul class="move-list">${items}</ul><div class="result-actions">${followBtn}<button class="ghost-btn" onclick="copyResult()">Copy list</button><button class="ghost-btn" onclick="hideResult()">Hide</button></div>`;
   }
   container.innerHTML=html;
-  container.dataset.plain=pt.join('\n');
+}
+
+function hideResult(){
+  lastGrouped=null;followState=null;
+  const el=document.getElementById('result');if(el)el.innerHTML='';
+  renderLock();
+}
+
+// ---- follow mode: step through the solution right on the scheme ----
+function startFollow(){
+  if(!lastGrouped||!lastGrouped.length)return;
+  followState={gi:0};
+  renderLock();
+  renderFollowUI();
+}
+
+function applyGroup(g,sign){
+  for(let m=0;m<g.count;m++){
+    const d=g.d*sign;
+    pinPositions[g.plate-1]+=d;
+    for(let j=1;j<=numPlates;j++){
+      if(j===g.plate)continue;
+      const r=relations[keyOf(g.plate,j)];
+      if(r)pinPositions[j-1]+=r*d;
+    }
+  }
+  // safety clamp (a valid solution never leaves bounds)
+  for(let i=0;i<pinPositions.length;i++){
+    if(pinPositions[i]<1)pinPositions[i]=1;
+    if(pinPositions[i]>numHoles)pinPositions[i]=numHoles;
+  }
+}
+
+function nextFollowStep(){
+  if(!followState||!lastGrouped)return;
+  if(followState.gi>=lastGrouped.length)return;
+  applyGroup(lastGrouped[followState.gi],1);
+  followState.gi++;
+  renderLock();
+  renderFollowUI();
+}
+
+function backFollowStep(){
+  if(!followState||!lastGrouped||followState.gi<=0)return;
+  followState.gi--;
+  applyGroup(lastGrouped[followState.gi],-1);
+  renderLock();
+  renderFollowUI();
+}
+
+function exitFollow(){
+  followState=null;
+  renderLock();
+  renderStaticResult();
+}
+
+// manual edits invalidate the computed path -> silently drop follow mode
+function invalidateFollow(dropResultToo){
+  if(followState){
+    followState=null;
+    if(!dropResultToo && lastGrouped) renderStaticResult();
+  }
+  if(dropResultToo){lastGrouped=null;}
+}
+
+function renderFollowUI(){
+  if(!followState||!lastGrouped)return;
+  const {container,isDesktop}=activeResultContainer();
+  if(!container)return;
+  const gi=followState.gi, n=lastGrouped.length, finished=gi>=n;
+  let status;
+  if(finished){
+    status=`<div class="status ok">All steps done — the lock should open now.</div>`;
+  }else{
+    const g=lastGrouped[gi], key=dirKey(g.d);
+    status=`<div class="status ok">Step ${gi+1} of ${n}: Plate ${g.plate} — press ${key}${g.count>1?' ×'+g.count:''}<div class="status-hint">(R – Right, L – Left)</div></div>`;
+  }
+  const items=buildMoveItems(finished?n:gi);
+  const backBtn=`<button class="ghost-btn" onclick="backFollowStep()" ${gi===0?'disabled':''}>◀ Back</button>`;
+  const nextBtn=finished?'':`<button class="ghost-btn follow-btn" onclick="nextFollowStep()">Next ▶</button>`;
+  const exitBtn=`<button class="ghost-btn" onclick="exitFollow()">Exit</button>`;
+  const copyBtn=`<button class="ghost-btn" onclick="copyResult()">Copy list</button>`;
+  let html=status;
+  if(isDesktop){
+    const hideBtn=`<button class="ghost-btn" onclick="clearCalcResult()">Hide</button>`;
+    html+=`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${backBtn}${nextBtn}${exitBtn}${copyBtn}${hideBtn}</div>`;
+  }else{
+    const hideBtn=`<button class="ghost-btn" onclick="hideResult()">Hide</button>`;
+    html+=`<ul class="move-list">${items}</ul><div class="result-actions">${backBtn}${nextBtn}${exitBtn}${copyBtn}${hideBtn}</div>`;
+  }
+  container.innerHTML=html;
+  const act=container.querySelector('li.active');
+  if(act&&act.scrollIntoView)act.scrollIntoView({block:'nearest'});
 }
 
 function clearCalcResult(){
-  document.getElementById('calc-result').innerHTML = '';
+  lastGrouped=null;followState=null;
+  document.getElementById('calc-result').innerHTML='';
+  renderLock();
 }
 
 function copyResult(){
@@ -641,8 +806,13 @@ function copyResult(){
 
 // re-render into the newly visible SVG whenever a breakpoint is crossed
 // (window resize on desktop, rotation on tablets/phones)
-window.matchMedia('(min-width:901px)').addEventListener('change', renderLock);
-window.matchMedia('(min-width:501px) and (max-width:900px)').addEventListener('change', renderLock);
+function onBreakpointChange(){
+  renderLock();
+  if(followState) renderFollowUI();
+  else if(lastGrouped) renderStaticResult();
+}
+window.matchMedia('(min-width:901px)').addEventListener('change', onBreakpointChange);
+window.matchMedia('(min-width:501px) and (max-width:900px)').addEventListener('change', onBreakpointChange);
 
 renderHolesRow();initPins();renderLock();
 </script>
