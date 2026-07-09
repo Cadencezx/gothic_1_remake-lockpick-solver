@@ -33,88 +33,51 @@
   }
   .wrap{max-width:880px;margin:0 auto;}
 
-  /* HERO */
   .hero{text-align:center;margin-bottom:34px;}
   .holes-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px;opacity:.8;}
   .hole-dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #3a332a, #0c0a07 70%);border:1px solid var(--steel-dim);}
   .hole-dot.lit{background:radial-gradient(circle at 35% 30%, var(--brass-bright), var(--brass) 60%, #6b4a1e 100%);border-color:var(--brass);}
   h1{
-    font-family:'Cinzel',serif;
-    font-weight:700;
-    font-size:clamp(28px,5vw,42px);
-    letter-spacing:.03em;
-    margin:0 0 8px;
-    color:var(--parchment);
+    font-family:'Cinzel',serif;font-weight:700;
+    font-size:clamp(28px,5vw,42px);letter-spacing:.03em;
+    margin:0 0 8px;color:var(--parchment);
     text-shadow:0 2px 12px rgba(192,138,62,.15);
   }
   .sub{color:var(--muted);font-size:14.5px;max-width:520px;margin:0 auto;line-height:1.5;}
 
-  /* PANEL */
   .panel{
     background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid #38301fbb;
-    border-radius:14px;
-    padding:22px 22px 26px;
-    margin-bottom:22px;
+    border:1px solid #38301fbb;border-radius:14px;
+    padding:22px 22px 26px;margin-bottom:22px;
     box-shadow:0 12px 30px -14px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.03);
   }
   .panel h2{
-    font-family:'Cinzel',serif;
-    font-size:15px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--brass-bright);
-    margin:0 0 4px;
-    font-weight:600;
+    font-family:'Cinzel',serif;font-size:15px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--brass-bright);margin:0 0 4px;font-weight:600;
   }
   .panel .hint{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.5;}
 
-  /* PLATE CONFIG BUTTONS */
-  .plate-config-row{
-    display:flex;
-    gap:12px;
-    margin-top:14px;
-    flex-wrap:wrap;
-  }
+  .plate-config-row{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;}
   .plate-config-btn{
-    flex:1 1 0;
-    min-width:80px;
-    padding:14px 0;
-    background:#1c150d;
-    border:1px solid var(--steel-dim);
-    border-radius:10px;
-    color:var(--parchment);
-    font-family:'Cinzel',serif;
-    font-size:20px;
-    font-weight:700;
-    cursor:pointer;
-    transition:all .15s;
-    text-align:center;
-    line-height:1.2;
+    flex:1 1 0;min-width:80px;padding:14px 0;
+    background:#1c150d;border:1px solid var(--steel-dim);border-radius:10px;
+    color:var(--parchment);font-family:'Cinzel',serif;font-size:20px;font-weight:700;
+    cursor:pointer;transition:all .15s;text-align:center;line-height:1.2;
   }
-  .plate-config-btn:hover{
-    border-color:var(--brass-bright);
-    background:#2c2210;
-    color:var(--brass-bright);
-  }
+  .plate-config-btn:hover{border-color:var(--brass-bright);background:#2c2210;color:var(--brass-bright);}
   .plate-config-btn.active{
-    border-color:var(--brass);
-    background:linear-gradient(180deg,var(--brass-bright),var(--brass));
-    color:#20160a;
-    box-shadow:0 0 12px rgba(192,138,62,.25);
+    border-color:var(--brass);background:linear-gradient(180deg,var(--brass-bright),var(--brass));
+    color:#20160a;box-shadow:0 0 12px rgba(192,138,62,.25);
   }
 
   .lock-area{display:flex;align-items:center;justify-content:center;position:relative;}
-  .lock-area .lock-wrap{position:relative;margin:10px auto 0;overflow:visible; text-align:center;}
 
-  /* RESET BUTTONS — десктоп (абсолютное позиционирование внутри lock-wrap) */
   .reset-btn{
     position:absolute;right:-100px;transform:translateY(-50%);
     width:86px;height:104px;border-radius:12px;
     border:1px solid var(--steel-dim);background:#1c150d;color:var(--brass-bright);
     cursor:pointer;transition:border-color .15s, background .15s;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
-    z-index:10;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;z-index:10;
   }
   .reset-btn .sym{font-size:30px;line-height:1;}
   .reset-btn .cap{font-size:11px;line-height:1.25;color:var(--parchment);font-family:'JetBrains Mono',monospace;letter-spacing:.02em;text-align:center;}
@@ -122,15 +85,15 @@
   .reset-btn:hover .sym{display:inline-block;transform:rotate(-30deg);transition:transform .15s;}
   .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
 
-  /* LOCK DIAGRAM */
   .lock-wrap{
+    position:relative;
     width:100%;
-    max-width:360px;
+    max-width:400px;
     margin:10px auto 0;
-    overflow-x:auto;
+    overflow:visible;
     text-align:center;
   }
-  #lockSvg{
+  #lockSvg, #lockSvgMobile{
     display:block;
     max-width:100%;
     height:auto;
@@ -143,12 +106,10 @@
   .hole-circle{fill:#0c0906;stroke:var(--steel-dim);stroke-width:1.5;cursor:pointer;touch-action:none;transition:.12s;}
   .hole-circle:hover{stroke:var(--brass-bright);stroke-width:2.5;}
   .hole-circle.center-hint{stroke:var(--steel);stroke-width:2;stroke-dasharray:1.5 2.5;}
-  .hole-circle.pin{fill:var(--brass-bright);stroke:var(--brass);stroke-width:2;
-    filter:drop-shadow(0 0 4px rgba(226,172,92,.7));}
+  .hole-circle.pin{fill:var(--brass-bright);stroke:var(--brass);stroke-width:2;filter:drop-shadow(0 0 4px rgba(226,172,92,.7));}
   .plate-node{fill:#1c150d;stroke:var(--steel-dim);stroke-width:2;cursor:pointer;transition:.15s;}
   .plate-node:hover{stroke:var(--brass-bright);}
-  .plate-node.selected{fill:#2c2210;stroke:var(--brass-bright);stroke-width:3;
-    filter:drop-shadow(0 0 7px rgba(226,172,92,.55));}
+  .plate-node.selected{fill:#2c2210;stroke:var(--brass-bright);stroke-width:3;filter:drop-shadow(0 0 7px rgba(226,172,92,.55));}
   .node-label-sm{
     font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
     fill:var(--parchment);text-anchor:middle;dominant-baseline:central;pointer-events:none;
@@ -161,40 +122,27 @@
   .edge-arrow.same{fill:var(--brass-bright);}
   .edge-arrow.opp{fill:var(--rust-bright);}
 
-  /* GUIDE LINES */
   .guide-line{
-    width:100%;
-    height:1px;
+    width:100%;height:1px;
     background:linear-gradient(90deg, transparent 0%, var(--steel-dim) 20%, var(--brass) 50%, var(--steel-dim) 80%, transparent 100%);
-    margin:0;
-    opacity:0.6;
+    margin:0;opacity:0.6;
   }
-  .guide-line.top{
-    margin-bottom:16px;
-  }
-  .guide-line.bottom{
-    margin-top:14px;
-    margin-bottom:14px;
-  }
+  .guide-line.top{margin-bottom:16px;}
+  .guide-line.bottom{margin-top:14px;margin-bottom:14px;}
 
   .legend{display:flex;gap:16px;margin-top:0;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center;row-gap:8px;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
-  .legend i{width:16px;height:16px;border-radius:4px;display:inline-block;border:1px solid #3a2f1e;}
-  .legend i.same{background:linear-gradient(180deg,#2c2210,#1c1608);border-color:var(--brass);}
-  .legend i.opp{background:linear-gradient(180deg,#2c1712,#1c0e0a);border-color:var(--rust);}
+  .legend svg{flex-shrink:0;}
 
-  /* BUTTON */
   .solve-btn{
     display:block;width:100%;margin-top:22px;padding:15px;border-radius:10px;border:1px solid var(--brass);
     background:linear-gradient(180deg,var(--brass-bright),var(--brass));
     color:#20160a;font-family:'Cinzel',serif;font-weight:700;font-size:16px;letter-spacing:.05em;
-    cursor:pointer;transition:filter .15s, transform .1s;
-    text-transform:uppercase;
+    cursor:pointer;transition:filter .15s, transform .1s;text-transform:uppercase;
   }
   .solve-btn:hover{filter:brightness(1.08);}
   .solve-btn:active{transform:scale(.995);}
 
-  /* RESULT */
   #result{margin-top:22px;}
   .status{font-size:14px;padding:12px 14px;border-radius:8px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
   .status.ok{background:#1a2418;border:1px solid #3f6b3a;color:#9fd695;}
@@ -202,38 +150,117 @@
 
   .move-list{list-style:none;margin:0;padding:0;counter-reset:step;}
   .move-list li{
-    counter-increment:step;
-    display:flex;align-items:center;gap:12px;
-    padding:9px 4px;border-bottom:1px solid #2a2115;
-    font-family:'JetBrains Mono',monospace;font-size:14px;
+    counter-increment:step;display:flex;align-items:center;gap:4px;
+    padding:9px 4px;border-bottom:1px solid #2a2115;font-family:'JetBrains Mono',monospace;font-size:14px;
   }
   .move-list li:last-child{border-bottom:none;}
   .move-list li::before{
-    content:counter(step);
-    min-width:24px;height:24px;border-radius:50%;background:#2a2115;color:var(--brass-bright);
+    content:counter(step);min-width:24px;height:24px;border-radius:50%;
+    background:#2a2115;color:var(--brass-bright);
     display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
   }
-  .move-plate{color:var(--parchment);font-weight:700;min-width:82px;}
+  .move-plate{color:var(--parchment);font-weight:700;min-width:70px;}
   .move-dir{
-    padding:2px 10px;border-radius:5px;font-weight:700;
-    background:#241c13;color:var(--brass-bright);border:1px solid var(--brass);
+    padding:2px 0;
+    width:40px;
+    text-align:center;
+    font-weight:700;
+    border-radius:5px;
+    background:#241c13;
+    color:var(--brass-bright);
+    border:1px solid var(--brass);
   }
   .move-dir.neg{color:var(--rust-bright);border-color:var(--rust);}
-  .move-x{color:var(--muted);font-size:12.5px;}
+  .move-x{color:var(--muted);font-size:14px;font-weight:700;min-width:30px;text-align:left;}
 
   .result-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
   .ghost-btn{
     background:transparent;border:1px solid var(--steel-dim);color:var(--muted);
-    padding:9px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
-    transition:.15s;
+    padding:9px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:.15s;
   }
   .ghost-btn:hover{border-color:var(--brass);color:var(--brass-bright);}
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
 
-  /* MOBILE */
   .reset-row{display:contents;}
 
+  /* Hidden by default; the desktop media query below turns it on.
+     IMPORTANT: this rule must come BEFORE the media query, otherwise it
+     overrides display:flex and the desktop panels never show. */
+  .desktop-bottom-row{display:none;}
+
+  /* ===================== DESKTOP (>=901px) ===================== */
+  @media (min-width:901px){
+    .desktop-bottom-row{
+      display:flex;
+      gap:12px;
+      align-items:stretch;
+      height:65vh;
+      min-height:400px;
+    }
+    .lock-panel{
+      flex:3;
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+    }
+    .lock-panel .lock-area{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding-left:20px;
+      padding-right:110px;
+      overflow:auto;
+      position:relative;
+      min-height:0;
+      /* keep scrollability as a safety net, but hide the scrollbar itself */
+      scrollbar-width:none;          /* Firefox */
+      -ms-overflow-style:none;       /* old Edge/IE */
+    }
+    .lock-panel .lock-area::-webkit-scrollbar{display:none;} /* Chrome/Safari */
+    /* let the scheme shrink to fit the fixed-height row instead of clipping */
+    .lock-panel .lock-wrap{height:100%;display:flex;align-items:center;justify-content:center;}
+    .lock-panel #lockSvg{max-height:100%;max-width:100%;width:auto;height:auto;}
+    .calc-panel{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+    }
+    .calc-panel .solve-btn{
+      margin-top:0;
+      margin-bottom:16px;
+    }
+    .calc-result-container{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .calc-result-list{
+      flex:1;
+      overflow-y:auto;
+      overflow-x:hidden;
+    }
+    .calc-result-list::-webkit-scrollbar{width:6px;}
+    .calc-result-list::-webkit-scrollbar-track{background:transparent;}
+    .calc-result-list::-webkit-scrollbar-thumb{background:var(--brass);border-radius:3px;}
+    .calc-result-list{scrollbar-width:thin;scrollbar-color:var(--brass) transparent;}
+    .calc-result-actions{
+      border-top:1px solid var(--steel-dim);
+      padding-top:12px;
+      margin-top:8px;
+      display:flex;
+      gap:10px;
+    }
+    .original-controls{display:none;}
+    #mobileLockPanel{display:none;}
+  }
+
+  .status-hint{font-size:11px;opacity:0.7;margin-top:4px;white-space:nowrap;}
+
+  /* ===================== MOBILE (<=900px), flattened media queries ===================== */
   @media (max-width:900px){
     body{padding:14px 10px 40px;-webkit-tap-highlight-color:transparent;}
     .hero{margin-bottom:22px;}
@@ -243,21 +270,10 @@
 
     .plate-config-btn{font-size:22px;padding:16px 0;min-width:64px;}
 
-    .lock-area .lock-wrap{
-      max-width:100%;
-      margin:8px auto 0;
-    }
-    #lockSvg{
-      width:100% !important;
-      height:auto !important;
-    }
-    .plate-bar, .drag-hit, .hole-circle {
-      touch-action: auto !important;
-      cursor: pointer !important;
-    }
-    .plate-bar, .drag-hit {
-      pointer-events: none !important;
-    }
+    .lock-area .lock-wrap{max-width:100%;margin:8px auto 0;}
+    #lockSvgMobile{width:100% !important;height:auto !important;}
+    .plate-bar, .drag-hit, .hole-circle{touch-action:auto !important;cursor:pointer !important;}
+    .plate-bar, .drag-hit{pointer-events:none !important;}
 
     .guide-line.top{margin-bottom:14px;}
     .guide-line.bottom{margin-top:12px;margin-bottom:12px;}
@@ -267,66 +283,38 @@
     .ghost-btn{flex:1;padding:12px 16px;text-align:center;}
     .move-list li{font-size:13px;}
     .move-plate{min-width:70px;}
+  }
 
-    /* ПОРТРЕТ: кнопки сброса внизу */
-    @media (max-width:500px){
-      .reset-row{
-        display:flex;gap:10px;margin-top:14px;
-      }
-      .reset-btn{
-        position:static;transform:none;
-        flex:1;width:auto;height:60px;
-        flex-direction:row;gap:10px;
-      }
-      .reset-btn:active{transform:scale(.96);}
-      .reset-btn .sym{font-size:24px;}
-      .reset-btn .cap{font-size:11.5px;}
-      .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
+  /* small phones: reset buttons in a roomy row under the scheme */
+  @media (max-width:500px){
+    .reset-row{display:flex;gap:10px;margin-top:14px;}
+    .reset-btn{
+      position:static;transform:none;flex:1;width:auto;height:60px;
+      flex-direction:row;gap:10px;
     }
+    .reset-btn:active{transform:scale(.96);}
+    .reset-btn .sym{font-size:24px;}
+    .reset-btn .cap{font-size:11.5px;}
+    .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
+  }
 
-    /* ЛАНДШАФТ: кнопки сброса справа между направляющими */
-    @media (min-width:501px){
-      .lock-area .lock-wrap{
-        overflow-x: visible !important;
-      }
-      .reset-row{
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        width: 72px;
-        margin-left: 12px;
-        margin-right: 10px;
-        flex-shrink: 0;
-        position: sticky;
-        top: 10px;
-        align-self: flex-start;
-      }
-      .reset-btn{
-        position: static;
-        transform: none;
-        width: 72px;
-        height: 80px;
-        flex-direction: column;
-        gap: 4px;
-        border-radius: 10px;
-        z-index: 100;
-      }
-      .reset-btn .sym{font-size: 24px;}
-      .reset-btn .cap{font-size: 9px;}
-      #lockSvg{
-        max-width: 420px !important;
-        width: auto !important;
-        margin: 0 auto;
-      }
-      .lock-wrap{
-        display: flex;
-        align-items: flex-start;
-        gap: 0;
-      }
-      .lock-wrap svg{
-        flex-shrink: 0;
-      }
+  /* tablets / landscape phones: compact button column beside the scheme */
+  @media (min-width:501px) and (max-width:900px){
+    .lock-area .lock-wrap{overflow-x:visible !important;}
+    .reset-row{
+      display:flex;flex-direction:column;gap:10px;width:72px;
+      margin-left:12px;margin-right:10px;flex-shrink:0;
+      position:sticky;top:10px;align-self:flex-start;
     }
+    .reset-btn{
+      position:static;transform:none;width:72px;height:80px;
+      flex-direction:column;gap:4px;border-radius:10px;z-index:100;
+    }
+    .reset-btn .sym{font-size:24px;}
+    .reset-btn .cap{font-size:9px;}
+    #lockSvgMobile{max-width:420px !important;width:auto !important;margin:0 auto;}
+    .lock-wrap{display:flex;align-items:flex-start;gap:0;}
+    .lock-wrap svg{flex-shrink:0;}
   }
 </style>
 </head>
@@ -339,6 +327,7 @@
     <p class="sub">Set the pin positions and plate links — the solver finds the shortest path to center.</p>
   </div>
 
+  <!-- Панель 1: Lock Setup (всегда) -->
   <div class="panel">
     <h2>Lock Setup</h2>
     <div class="plate-config-row" id="plateConfigRow">
@@ -349,18 +338,62 @@
     </div>
   </div>
 
-  <div class="panel" id="lockSchemePanel">
+  <!-- ДЕСКТОПНАЯ версия (видна только ≥901px) -->
+  <div class="desktop-bottom-row" id="desktopBottomRow">
+    <div class="panel lock-panel" id="lockSchemePanel">
+      <h2>Lock Scheme</h2>
+      <p class="hint">Drag a plate up/down (grab anywhere on it) or click a hole directly. Dashed hole = target. To link plates: click one «P» circle, then another (repeat clicks cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
+
+      <div class="guide-line top"></div>
+
+      <div class="lock-area" id="lockAreaDesktop">
+        <div class="lock-wrap">
+          <svg id="lockSvg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="reset-row">
+            <button class="reset-btn" id="resetSeqBtn" onclick="resetSequences()" title="Reset all plate links"><span class="sym">⟲</span><span class="cap">reset<br>links</span></button>
+            <button class="reset-btn" id="resetPlatesBtn" onclick="resetPlates()" title="Reset pins to center"><span class="sym">⟲</span><span class="cap">reset<br>plates</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-line bottom"></div>
+
+      <div class="legend">
+        <span>
+          <svg width="16" height="10" viewBox="0 0 16 10">
+            <polygon points="10,1 2,5 10,9" fill="var(--brass-bright)" stroke="var(--void)" stroke-width="1"/>
+          </svg>
+          same direction
+        </span>
+        <span>
+          <svg width="16" height="10" viewBox="0 0 16 10">
+            <polygon points="10,1 2,5 10,9" fill="var(--rust-bright)" stroke="var(--void)" stroke-width="1"/>
+          </svg>
+          opposite
+        </span>
+        <span style="opacity:.8;">arrow: mover → follower</span>
+      </div>
+    </div>
+
+    <div class="panel calc-panel">
+      <button class="solve-btn" onclick="runSolve()">Calculate Sequence</button>
+      <div class="calc-result-container" id="calc-result"></div>
+    </div>
+  </div>
+
+  <!-- МОБИЛЬНАЯ версия (видна только ≤900px) -->
+  <div class="panel" id="mobileLockPanel">
     <h2>Lock Scheme</h2>
-    <p class="hint">Drag a plate up/down (grab anywhere on it) or click a hole directly. Dashed hole = target. To link plates: click one «P» circle, then another (repeat clicks cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
+    <p class="hint">Tap the hole where the pin currently sits — it will snap to the pick line. Dashed hole = target. To link plates: tap one «P» circle, then another (repeat taps cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
 
     <div class="guide-line top"></div>
 
-    <div class="lock-area" id="lockArea">
+    <div class="lock-area" id="lockAreaMobile">
       <div class="lock-wrap">
-        <svg id="lockSvg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="lockSvgMobile" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="reset-row">
-          <button class="reset-btn" id="resetSeqBtn" onclick="resetSequences()" title="Reset all plate links"><span class="sym">⟲</span><span class="cap">reset<br>links</span></button>
-          <button class="reset-btn" id="resetPlatesBtn" onclick="resetPlates()" title="Reset pins to center"><span class="sym">⟲</span><span class="cap">reset<br>plates</span></button>
+          <button class="reset-btn" id="resetSeqBtnMobile" onclick="resetSequences()" title="Reset all plate links"><span class="sym">⟲</span><span class="cap">reset<br>links</span></button>
+          <button class="reset-btn" id="resetPlatesBtnMobile" onclick="resetPlates()" title="Reset pins to center"><span class="sym">⟲</span><span class="cap">reset<br>plates</span></button>
         </div>
       </div>
     </div>
@@ -368,15 +401,27 @@
     <div class="guide-line bottom"></div>
 
     <div class="legend">
-      <span><i class="same"></i> same direction</span>
-      <span><i class="opp"></i> opposite</span>
-      <span style="opacity:.8;">➤ = mover → follower</span>
+      <span>
+        <svg width="16" height="10" viewBox="0 0 16 10">
+          <polygon points="10,1 2,5 10,9" fill="var(--brass-bright)" stroke="var(--void)" stroke-width="1"/>
+        </svg>
+        same direction
+      </span>
+      <span>
+        <svg width="16" height="10" viewBox="0 0 16 10">
+          <polygon points="10,1 2,5 10,9" fill="var(--rust-bright)" stroke="var(--void)" stroke-width="1"/>
+        </svg>
+        opposite
+      </span>
+      <span style="opacity:.8;">arrow: mover → follower</span>
     </div>
   </div>
 
-  <button class="solve-btn" onclick="runSolve()">Calculate Sequence</button>
-
-  <div id="result"></div>
+  <!-- Общие элементы управления (для мобильной версии) -->
+  <div class="original-controls">
+    <button class="solve-btn" onclick="runSolve()">Calculate Sequence</button>
+    <div id="result"></div>
+  </div>
 
   <p class="footnote">Finds the shortest sequence, keeping every pin inside the holes at all intermediate steps.</p>
 
@@ -389,478 +434,217 @@ let relations = {};
 
 function keyOf(i,j){return i+'-'+j;}
 
-function resetPlates(){
-  pinPositions = [];
-  initPins();
-  renderLock();
-}
-
-function resetSequences(){
-  relations = {};
-  selectedNode = null;
-  renderLock();
-}
+function resetPlates(){pinPositions=[];initPins();renderLock();}
+function resetSequences(){relations={};selectedNode=null;renderLock();}
 
 function renderHolesRow(){
-  const row = document.getElementById('holesRow');
-  row.innerHTML='';
-  for(let i=0;i<7;i++){
-    const d = document.createElement('div');
-    d.className='hole-dot'+(i===3?' lit':'');
-    row.appendChild(d);
-  }
+  const row=document.getElementById('holesRow');row.innerHTML='';
+  for(let i=0;i<7;i++){const d=document.createElement('div');d.className='hole-dot'+(i===3?' lit':'');row.appendChild(d);}
 }
 
 function selectPlates(n){
-  if(n===numPlates) return;
-  numPlates = n;
-  Object.keys(relations).forEach(k=>{
-    const [a,b]=k.split('-').map(Number);
-    if(a>numPlates||b>numPlates) delete relations[k];
-  });
-  if(selectedNode>numPlates) selectedNode=null;
-  initPins();
-  renderLock();
-  document.querySelectorAll('.plate-config-btn').forEach(btn=>{
-    const plates = parseInt(btn.dataset.plates,10);
-    btn.classList.toggle('active', plates===numPlates);
-  });
+  if(n===numPlates)return;numPlates=n;
+  Object.keys(relations).forEach(k=>{const[a,b]=k.split('-').map(Number);if(a>numPlates||b>numPlates)delete relations[k]});
+  if(selectedNode>numPlates)selectedNode=null;initPins();renderLock();
+  document.querySelectorAll('.plate-config-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.plates)===numPlates));
 }
+document.querySelectorAll('.plate-config-btn').forEach(b=>b.addEventListener('click',()=>selectPlates(parseInt(b.dataset.plates))));
 
-document.querySelectorAll('.plate-config-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const plates = parseInt(btn.dataset.plates,10);
-    selectPlates(plates);
-  });
-});
+function centerOf(h){return Math.ceil((h+1)/2);}
+let pinPositions=[],selectedNode=null;
+function initPins(){const p=pinPositions.slice();pinPositions=[];for(let i=1;i<=numPlates;i++){let v=p[i-1];if(!v||v>numHoles)v=centerOf(numHoles);pinPositions.push(v);}}
+function setPin(p,h){pinPositions[p-1]=h;renderLock();}
 
-function centerOf(h){ return Math.ceil((h+1)/2); }
+const NS='http://www.w3.org/2000/svg';
+function svgEl(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
 
-let pinPositions = [];
-let selectedNode = null;
-
-function initPins(){
-  const prev = pinPositions.slice();
-  pinPositions = [];
-  for(let p=1;p<=numPlates;p++){
-    let v = prev[p-1];
-    if(!v || v>numHoles) v = centerOf(numHoles);
-    pinPositions.push(v);
-  }
-}
-
-function setPin(p,h){
-  pinPositions[p-1]=h;
-  renderLock();
-}
-
-const NS = 'http://www.w3.org/2000/svg';
-function svgEl(tag, attrs){
-  const el = document.createElementNS(NS, tag);
-  for(const k in attrs) el.setAttribute(k, attrs[k]);
-  return el;
-}
-
-const ARC = {base:15, step:13, nodeR:12, labelPad:12};
-
-function clearBase(span){
-  if(span<2) return ARC.base;
-  const f = 2*(span-1)/(span*span);
-  return Math.max(ARC.base, Math.ceil((ARC.nodeR+8)/f));
-}
+const ARC={base:15,step:13,nodeR:12,labelPad:12};
+function clearBase(s){if(s<2)return ARC.base;const f=2*(s-1)/(s*s);return Math.max(ARC.base,Math.ceil((ARC.nodeR+8)/f));}
 
 function computeLayout(arcSpace){
-  const holeSpacing = 30;
-  const colGap = 40;
-  const marginLeft = 20;
-  const marginRight = 20;
-  const nodeR = ARC.nodeR;
-  const arrowGap = 12;
-  const arrowClearance = 22;
-  const arrowSize = 8;
-  const topMargin = 16;
-  const bottomMargin = 16;
-
-  const reserve = clearBase(numPlates-1) + 2*ARC.step;
-  const topBulge = Math.max(reserve, (arcSpace&&arcSpace.topBulge)||0);
-  const botBulge = Math.max(reserve, (arcSpace&&arcSpace.bottomBulge)||0);
-
-  const holesHalfHeight = (numHoles-1)*holeSpacing;
-
-  const nodeY = topMargin + Math.ceil(topBulge/2) + ARC.labelPad;
-  const belowNodeDip = botBulge/2 + 14;
-  const topArrowY = nodeY + nodeR + Math.max(arrowGap, belowNodeDip) + arrowSize;
-  const centerY = topArrowY + arrowClearance + holesHalfHeight;
-  const bottomArrowY = centerY + holesHalfHeight + arrowClearance;
-  const height = bottomArrowY + arrowSize + bottomMargin;
-  const width = marginLeft + (numPlates-1)*colGap + marginRight;
-
-  return {holeSpacing,colGap,marginLeft,marginRight,nodeR,arrowGap,arrowSize,
-          topArrowY,centerY,bottomArrowY,nodeY,width,height};
+  // arrows are gone: ac is now just a small clearance between the plate's
+  // extreme position and the scheme edge; as (arrow size) is zero
+  const hs=30,cg=40,ml=20,mr=20,nr=ARC.nodeR,ag=12,ac=14,as=0,tm=16,bm=16;
+  const r=clearBase(numPlates-1)+2*ARC.step;
+  const tb=Math.max(r,(arcSpace&&arcSpace.topBulge)||0),bb=Math.max(r,(arcSpace&&arcSpace.bottomBulge)||0);
+  const hhh=(numHoles-1)*hs;
+  const ny=tm+Math.ceil(tb/2)+ARC.labelPad;
+  const bnd=bb/2+14,tay=ny+nr+Math.max(ag,bnd)+as,cy=tay+ac+hhh,bay=cy+hhh+ac;
+  const H=bay+as+bm,W=ml+(numPlates-1)*cg+mr;
+  return{holeSpacing:hs,colGap:cg,marginLeft:ml,marginRight:mr,nodeR:nr,arrowGap:ag,arrowSize:as,topArrowY:tay,centerY:cy,bottomArrowY:bay,nodeY:ny,width:W,height:H};
 }
-function colX(p,L){ return L.marginLeft + (p-1)*L.colGap; }
-function holeScreenY(k,h,L){ return L.centerY + (k-h)*L.holeSpacing; }
+function colX(p,L){return L.marginLeft+(p-1)*L.colGap;}
+function holeScreenY(k,h,L){return L.centerY+(k-h)*L.holeSpacing;}
 
 function computeArcLevels(){
-  const same = [], opp = [];
-  for(let i=1;i<=numPlates;i++){
-    for(let j=1;j<=numPlates;j++){
-      if(i===j) continue;
-      const v = relations[keyOf(i,j)];
-      if(!v) continue;
-      (v===1?same:opp).push({i,j,a:Math.min(i,j),b:Math.max(i,j)});
-    }
-  }
-
+  const same=[],opp=[];
+  for(let i=1;i<=numPlates;i++)for(let j=1;j<=numPlates;j++){if(i===j)continue;const v=relations[keyOf(i,j)];if(v)(v===1?same:opp).push({i,j,a:Math.min(i,j),b:Math.max(i,j)});}
   function assign(edges){
-    edges.sort((e1,e2)=> (e1.b-e1.a)-(e2.b-e2.a) || e1.a-e2.a);
-    const bulges = {};
-    const floors = [];
-    let maxBulge = 0;
-    edges.forEach(e=>{
-      let lvl = 0;
-      while(true){
-        const occupied = floors[lvl];
-        const conflict = occupied && occupied.some(iv => Math.max(iv.a,e.a) < Math.min(iv.b,e.b));
-        if(!conflict) break;
-        lvl++;
-      }
-      if(!floors[lvl]) floors[lvl] = [];
-      floors[lvl].push({a:e.a,b:e.b});
-      const bulge = clearBase(e.b-e.a) + lvl*ARC.step;
-      bulges[keyOf(e.i,e.j)] = bulge;
-      if(bulge>maxBulge) maxBulge=bulge;
-    });
-    return {bulges, maxBulge};
+    edges.sort((a,b)=>(a.b-a.a)-(b.b-b.a)||a.a-b.a);
+    const bulges={},floors=[];let max=0;
+    edges.forEach(e=>{let l=0;while(true){const occ=floors[l];if(!occ||!occ.some(iv=>Math.max(iv.a,e.a)<Math.min(iv.b,e.b)))break;l++}if(!floors[l])floors[l]=[];floors[l].push({a:e.a,b:e.b});const bulge=clearBase(e.b-e.a)+l*ARC.step;bulges[keyOf(e.i,e.j)]=bulge;if(bulge>max)max=bulge;});
+    return{bulges,maxBulge:max};
   }
-
-  const s = assign(same), o = assign(opp);
-  return {bulges:{...s.bulges, ...o.bulges}, topBulge:s.maxBulge, bottomBulge:o.maxBulge};
+  const s=assign(same),o=assign(opp);
+  return{bulges:{...s.bulges,...o.bulges},topBulge:s.maxBulge,bottomBulge:o.maxBulge};
 }
 
-let dragState = null;
-
+let dragState=null;
 function getPointerY(e){
-  const svg = document.getElementById('lockSvg');
-  const rect = svg.getBoundingClientRect();
-  const vb = svg.viewBox.baseVal;
-  const scaleY = rect.height ? (vb.height / rect.height) : 1;
-  const clientY = (e.touches && e.touches.length) ? e.touches[0].clientY : e.clientY;
-  return (clientY-rect.top)*scaleY + vb.y;
+  const svg = document.getElementById(window.matchMedia('(min-width:901px)').matches ? 'lockSvg' : 'lockSvgMobile');
+  if(!svg) return 0;
+  const rect=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal;
+  const s=rect.height?vb.height/rect.height:1,cy=e.touches&&e.touches.length?e.touches[0].clientY:e.clientY;
+  return(cy-rect.top)*s+vb.y;
 }
-
 function startDrag(e,p){
-  if(window.matchMedia('(max-width:900px)').matches) return;
-  e.preventDefault();
-  dragState = {plate:p, startY:getPointerY(e), startH:pinPositions[p-1]};
-  window.addEventListener('pointermove', onDragMove);
-  window.addEventListener('pointerup', onDragEnd);
-  window.addEventListener('pointercancel', onDragEnd);
-  if(e.target.setPointerCapture && e.pointerId!==undefined){
-    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
-  }
+  if(window.matchMedia('(max-width:900px)').matches)return;
+  e.preventDefault();dragState={plate:p,startY:getPointerY(e),startH:pinPositions[p-1]};
+  window.addEventListener('pointermove',onDragMove);window.addEventListener('pointerup',onDragEnd);window.addEventListener('pointercancel',onDragEnd);
+  if(e.target.setPointerCapture&&e.pointerId!==undefined)try{e.target.setPointerCapture(e.pointerId)}catch(_){}
 }
-
 function onDragMove(e){
-  if(!dragState) return;
-  const L = computeLayout();
-  const deltaY = getPointerY(e) - dragState.startY;
-  const steps = Math.round(deltaY / L.holeSpacing);
-  let h = dragState.startH - steps;
-  if(h<1) h=1;
-  if(h>numHoles) h=numHoles;
-  if(pinPositions[dragState.plate-1] !== h){
-    pinPositions[dragState.plate-1] = h;
-    renderLock();
-  }
+  if(!dragState)return;
+  const L=computeLayout(),dY=getPointerY(e)-dragState.startY,steps=Math.round(dY/L.holeSpacing);
+  let h=dragState.startH-steps;if(h<1)h=1;if(h>numHoles)h=numHoles;
+  if(pinPositions[dragState.plate-1]!==h){pinPositions[dragState.plate-1]=h;renderLock();}
 }
-
-function onDragEnd(){
-  dragState = null;
-  window.removeEventListener('pointermove', onDragMove);
-  window.removeEventListener('pointerup', onDragEnd);
-  window.removeEventListener('pointercancel', onDragEnd);
-}
+function onDragEnd(){dragState=null;window.removeEventListener('pointermove',onDragMove);window.removeEventListener('pointerup',onDragEnd);window.removeEventListener('pointercancel',onDragEnd);}
 
 function addArcEdge(svg,i,j,L,bulges){
-  const val = relations[keyOf(i,j)];
-  if(!val) return;
-  const xi = colX(i,L), xj = colX(j,L);
-  const bulge = bulges[keyOf(i,j)] || ARC.base;
-  const cx = (xi+xj)/2;
-  const cy = (val===1) ? L.nodeY - bulge : L.nodeY + bulge;
-  const path = svgEl('path',{
-    class:'lock-edge '+(val===1?'same':'opp'),
-    d:`M${xi},${L.nodeY} Q${cx},${cy} ${xj},${L.nodeY}`,
-    fill:'none'
-  });
-  path.addEventListener('click', ()=>cycleEdge(i,j));
-  svg.appendChild(path);
-  const py = (L.nodeY + cy)/2;
-  const s = (xj > xi) ? 1 : -1;
-  const arrow = svgEl('polygon',{
-    class:'edge-arrow '+(val===1?'same':'opp'),
-    points:`${cx+6*s},${py} ${cx-5*s},${py-4.5} ${cx-5*s},${py+4.5}`
-  });
+  const val=relations[keyOf(i,j)];if(!val)return;
+  const xi=colX(i,L),xj=colX(j,L),bulge=bulges[keyOf(i,j)]||ARC.base,cx=(xi+xj)/2;
+  const cy=val===1?L.nodeY-bulge:L.nodeY+bulge;
+  const path=svgEl('path',{class:'lock-edge '+(val===1?'same':'opp'),d:`M${xi},${L.nodeY} Q${cx},${cy} ${xj},${L.nodeY}`,fill:'none'});
+  path.addEventListener('click',()=>cycleEdge(i,j));svg.appendChild(path);
+  const py=(L.nodeY+cy)/2,s=xj>xi?1:-1;
+  const arrow=svgEl('polygon',{class:'edge-arrow '+(val===1?'same':'opp'),points:`${cx+6*s},${py} ${cx-5*s},${py-4.5} ${cx-5*s},${py+4.5}`});
   svg.appendChild(arrow);
 }
 
 function renderLock(){
-  const svg = document.getElementById('lockSvg');
-  svg.innerHTML='';
-  const arcInfo = computeArcLevels();
-  const L = computeLayout({topBulge:arcInfo.topBulge, bottomBulge:arcInfo.bottomBulge});
-  svg.setAttribute('viewBox', `0 0 ${L.width} ${L.height}`);
-  svg.setAttribute('width', L.width);
-  svg.setAttribute('height', L.height);
-
-  const seqBtn = document.getElementById('resetSeqBtn');
-  const platesBtn = document.getElementById('resetPlatesBtn');
   const isDesktop = window.matchMedia('(min-width:901px)').matches;
-  const isLandscape = window.matchMedia('(min-width:501px) and (max-width:900px)').matches;
+  const svg = document.getElementById(isDesktop ? 'lockSvg' : 'lockSvgMobile');
+  if(!svg) return;
+  svg.innerHTML='';
+  const arcInfo=computeArcLevels(),L=computeLayout({topBulge:arcInfo.topBulge,bottomBulge:arcInfo.bottomBulge});
+  svg.setAttribute('viewBox',`0 0 ${L.width} ${L.height}`);svg.setAttribute('width',L.width);svg.setAttribute('height',L.height);
 
-  if(isDesktop && seqBtn && platesBtn){
-    seqBtn.style.position = 'absolute';
-    seqBtn.style.right = '-100px';
-    seqBtn.style.top = (L.nodeY / L.height * 100) + '%';
-    seqBtn.style.transform = 'translateY(-50%)';
-    seqBtn.style.width = '86px';
-    seqBtn.style.height = '104px';
+  const seqBtn=document.getElementById(isDesktop ? 'resetSeqBtn' : 'resetSeqBtnMobile');
+  const platesBtn=document.getElementById(isDesktop ? 'resetPlatesBtn' : 'resetPlatesBtnMobile');
+  const isLandscape=window.matchMedia('(min-width:501px) and (max-width:900px)').matches;
 
-    platesBtn.style.position = 'absolute';
-    platesBtn.style.right = '-100px';
-    platesBtn.style.top = (L.centerY / L.height * 100) + '%';
-    platesBtn.style.transform = 'translateY(-50%)';
-    platesBtn.style.width = '86px';
-    platesBtn.style.height = '104px';
-  }
-
-  if(isLandscape && seqBtn && platesBtn){
-    seqBtn.style.position = 'static';
-    seqBtn.style.width = '72px';
-    seqBtn.style.height = '80px';
-
-    platesBtn.style.position = 'static';
-    platesBtn.style.width = '72px';
-    platesBtn.style.height = '80px';
-  }
-
-  const leftX = colX(1,L);
-  const rightX = colX(numPlates,L);
-
-  svg.appendChild(svgEl('line',{
-    class:'pin-line', x1:leftX-14, y1:L.centerY, x2:rightX+14, y2:L.centerY
-  }));
-
-  for(let i=1;i<=numPlates;i++){
-    for(let j=1;j<=numPlates;j++){
-      if(i===j) continue;
-      addArcEdge(svg,i,j,L,arcInfo.bulges);
+  if(seqBtn && platesBtn){
+    if(isDesktop){
+      seqBtn.style.cssText='position:absolute;right:-100px;top:'+(L.nodeY/L.height*100)+'%;transform:translateY(-50%);width:86px;height:104px;';
+      platesBtn.style.cssText='position:absolute;right:-100px;top:'+(L.centerY/L.height*100)+'%;transform:translateY(-50%);width:86px;height:104px;';
+    } else if(isLandscape){
+      seqBtn.style.cssText='position:static;width:72px;height:80px;';
+      platesBtn.style.cssText='position:static;width:72px;height:80px;';
+    } else {
+      // small phones: clear inline styles so the CSS media query rules apply
+      seqBtn.style.cssText='';
+      platesBtn.style.cssText='';
     }
   }
 
-  const center = centerOf(numHoles);
-  const isMobile = window.matchMedia('(max-width:900px)').matches;
+  svg.appendChild(svgEl('line',{class:'pin-line',x1:colX(1,L)-14,y1:L.centerY,x2:colX(numPlates,L)+14,y2:L.centerY}));
+  for(let i=1;i<=numPlates;i++)for(let j=1;j<=numPlates;j++){if(i===j)continue;addArcEdge(svg,i,j,L,arcInfo.bulges);}
 
+  const center=centerOf(numHoles),isMobile=window.matchMedia('(max-width:900px)').matches;
   for(let p=1;p<=numPlates;p++){
-    const x = colX(p,L);
-    const h = pinPositions[p-1];
-
-    const yStart = holeScreenY(1,h,L);
-    const yEnd = holeScreenY(numHoles,h,L);
-
-    const hit = svgEl('rect',{
-      class:'drag-hit',
-      x:x-14, y:L.topArrowY-6, width:28, height:(L.bottomArrowY-L.topArrowY)+12,
-      fill:'transparent'
-    });
-    if(!isMobile) hit.addEventListener('pointerdown', (e)=>startDrag(e,p));
-    svg.appendChild(hit);
-
-    const bar = svgEl('line',{class:'plate-bar', x1:x, y1:yStart-9, x2:x, y2:yEnd+9});
-    if(!isMobile) bar.addEventListener('pointerdown', (e)=>startDrag(e,p));
-    svg.appendChild(bar);
-
+    const x=colX(p,L),h=pinPositions[p-1],ys=holeScreenY(1,h,L),ye=holeScreenY(numHoles,h,L);
+    const hit=svgEl('rect',{class:'drag-hit',x:x-14,y:L.topArrowY-6,width:28,height:(L.bottomArrowY-L.topArrowY)+12,fill:'transparent'});
+    if(!isMobile)hit.addEventListener('pointerdown',e=>startDrag(e,p));svg.appendChild(hit);
+    const bar=svgEl('line',{class:'plate-bar',x1:x,y1:ys-9,x2:x,y2:ye+9});
+    if(!isMobile)bar.addEventListener('pointerdown',e=>startDrag(e,p));svg.appendChild(bar);
     for(let k=1;k<=numHoles;k++){
-      const hy = holeScreenY(k,h,L);
-      const isCurrent = (k===h);
-      const isGoalHole = (k===center);
-      let cls = 'hole-circle';
-      if(isCurrent) cls+=' pin';
-      else if(isGoalHole) cls+=' center-hint';
-      const circle = svgEl('circle',{class:cls, cx:x, cy:hy, r:isCurrent?8.5:6.5});
-      if(!isMobile){
-        circle.addEventListener('pointerdown', (e)=>startDrag(e,p));
-        circle.addEventListener('click', ()=>setPin(p,k));
-      } else {
-        circle.addEventListener('click', ()=>setPin(p,k));
-      }
+      const hy=holeScreenY(k,h,L),isCur=(k===h),isGoal=(k===center);
+      let cls='hole-circle';if(isCur)cls+=' pin';else if(isGoal)cls+=' center-hint';
+      const circle=svgEl('circle',{class:cls,cx:x,cy:hy,r:isCur?8.5:6.5});
+      if(!isMobile){circle.addEventListener('pointerdown',e=>startDrag(e,p));circle.addEventListener('click',()=>setPin(p,k));}
+      else{circle.addEventListener('click',()=>setPin(p,k));}
       svg.appendChild(circle);
     }
-    if(h===center){
-      svg.appendChild(svgEl('circle',{class:'solved-ring', cx:x, cy:L.centerY, r:13}));
-    }
-
-    const nodeCircle = svgEl('circle',{
-      class:'plate-node'+(selectedNode===p?' selected':''),
-      cx:x, cy:L.nodeY, r:L.nodeR
-    });
-    nodeCircle.addEventListener('click', ()=>handleNodeClick(p));
-    const nodeLabel = svgEl('text',{class:'node-label-sm', x:x, y:L.nodeY});
-    nodeLabel.textContent = 'P'+p;
-    svg.appendChild(nodeCircle);
-    svg.appendChild(nodeLabel);
+    if(h===center)svg.appendChild(svgEl('circle',{class:'solved-ring',cx:x,cy:L.centerY,r:13}));
+    const node=svgEl('circle',{class:'plate-node'+(selectedNode===p?' selected':''),cx:x,cy:L.nodeY,r:L.nodeR});
+    node.addEventListener('click',()=>handleNodeClick(p));
+    const label=svgEl('text',{class:'node-label-sm',x:x,y:L.nodeY});label.textContent='P'+p;
+    svg.appendChild(node);svg.appendChild(label);
   }
 }
 
-function handleNodeClick(plateNum){
-  if(selectedNode===null){
-    selectedNode = plateNum;
-  } else if(selectedNode===plateNum){
-    selectedNode = null;
-  } else {
-    cycleEdge(selectedNode, plateNum);
-    return;
-  }
-  renderLock();
+function handleNodeClick(p){
+  if(selectedNode===null)selectedNode=p;else if(selectedNode===p)selectedNode=null;
+  else{cycleEdge(selectedNode,p);return;}renderLock();
 }
-
 function cycleEdge(i,j){
-  const k = keyOf(i,j);
-  const cur = relations[k]||0;
-  const next = cur===0?1:(cur===1?-1:0);
-  if(next===0) delete relations[k]; else relations[k]=next;
-  renderLock();
+  const k=keyOf(i,j),cur=relations[k]||0,nxt=cur===0?1:(cur===1?-1:0);
+  if(nxt===0)delete relations[k];else relations[k]=nxt;renderLock();
 }
 
 function runSolve(){
-  const start = pinPositions.slice();
-  const target = centerOf(numHoles);
-  const goal = Array(numPlates).fill(target);
+  const start=pinPositions.slice(),target=centerOf(numHoles),goal=Array(numPlates).fill(target);
+  function applyMove(s,p,d){const ns=s.slice();ns[p-1]+=d;for(let j=1;j<=numPlates;j++){if(j===p)continue;const r=relations[keyOf(p,j)];if(r)ns[j-1]+=r*d;}for(let v of ns)if(v<1||v>numHoles)return null;return ns;}
 
-  function applyMove(state, plate, d){
-    const ns = state.slice();
-    ns[plate-1]+=d;
-    for(let j=1;j<=numPlates;j++){
-      if(j===plate) continue;
-      const rel = relations[keyOf(plate,j)];
-      if(rel) ns[j-1]+=rel*d;
-    }
-    for(let v of ns){ if(v<1||v>numHoles) return null; }
-    return ns;
-  }
+  const isDesktop = window.matchMedia('(min-width:901px)').matches;
+  const container = isDesktop ? document.getElementById('calc-result') : document.getElementById('result');
 
-  const resDiv = document.getElementById('result');
   if(JSON.stringify(start)===JSON.stringify(goal)){
-    resDiv.innerHTML = `<div class="status ok">All plates are already centered — the lock should open right now.</div>`;
+    container.innerHTML='<div class="status ok">All plates are already centered — the lock should open right now.</div>';
     return;
   }
-
-  resDiv.innerHTML = `<div class="status ok">Calculating…</div>`;
+  container.innerHTML='<div class="status ok">Calculating…</div>';
 
   setTimeout(()=>{
-    const startKey = start.join(',');
-    const goalKey = goal.join(',');
-    const visited = new Map();
-    visited.set(startKey, null);
-    let queue = [start];
-    let qi = 0;
-    let found = false;
-    let iterations = 0;
-    const MAX_STATES = 4000000;
-
-    while(qi<queue.length){
-      const s = queue[qi++];
-      const sk = s.join(',');
-      if(sk===goalKey){ found=true; break; }
-      for(let plate=1;plate<=numPlates;plate++){
-        for(const d of [1,-1]){
-          const ns = applyMove(s, plate, d);
-          if(!ns) continue;
-          const nk = ns.join(',');
-          if(!visited.has(nk)){
-            visited.set(nk, {prev:sk, plate, d});
-            queue.push(ns);
-            iterations++;
-            if(iterations>MAX_STATES){ break; }
-          }
-        }
-      }
-      if(iterations>MAX_STATES) break;
-    }
-
-    if(!found){
-      resDiv.innerHTML = `<div class="status err">No solution exists with these links — one of them is probably set in the wrong direction. Re-check links where a single plate pulls several others.</div>`;
-      return;
-    }
-
-    const path = [];
-    let curKey = goalKey;
-    while(curKey!==startKey){
-      const rec = visited.get(curKey);
-      path.push({plate:rec.plate, d:rec.d});
-      curKey = rec.prev;
-    }
-    path.reverse();
-
-    renderResult(path);
-  }, 30);
+    const startKey=start.join(','),goalKey=goal.join(','),visited=new Map();visited.set(startKey,null);
+    let queue=[start],qi=0,found=false,iters=0,MAX=4000000;
+    while(qi<queue.length){const s=queue[qi++];if(s.join(',')===goalKey){found=true;break;}for(let p=1;p<=numPlates;p++)for(const d of[1,-1]){const ns=applyMove(s,p,d);if(!ns)continue;const nk=ns.join(',');if(!visited.has(nk)){visited.set(nk,{prev:s.join(','),plate:p,d});queue.push(ns);if(++iters>MAX)break;}}if(iters>MAX)break;}
+    if(!found){container.innerHTML='<div class="status err">No solution exists with these links — one of them is probably set in the wrong direction. Re-check links where a single plate pulls several others.</div>';return;}
+    const path=[];let ck=goalKey;while(ck!==startKey){const r=visited.get(ck);path.push({plate:r.plate,d:r.d});ck=r.prev;}path.reverse();
+    renderResult(path,container,isDesktop);
+  },30);
 }
 
-function renderResult(path){
-  const resDiv = document.getElementById('result');
-  const total = path.length;
+function renderResult(path,container,isDesktop){
+  const total=path.length,grouped=[];
+  for(const mv of path){const last=grouped[grouped.length-1];if(last&&last.plate===mv.plate&&last.d===mv.d)last.count++;else grouped.push({plate:mv.plate,d:mv.d,count:1});}
+  function dl(d){return{key:d===1?'L':'R'};}
+  let html = `<div class="status ok">Done — ${total} moves.<div class="status-hint">(R – Right, L – Left)</div></div>`;
 
-  const grouped = [];
-  for(const mv of path){
-    const last = grouped[grouped.length-1];
-    if(last && last.plate===mv.plate && last.d===mv.d){
-      last.count++;
-    } else {
-      grouped.push({plate:mv.plate, d:mv.d, count:1});
-    }
-  }
-
-  function dirLabel(d){
-    const isUp = d===1;
-    return {key: isUp ? 'L' : 'R', arrow: isUp ? '▲' : '▼'};
-  }
-
-  let html = `<div class="status ok">Done — ${total} moves.</div>`;
-  html += `<ul class="move-list">`;
-  let plainText = [];
+  let items='';
+  const pt=[];
   grouped.forEach(g=>{
-    const d = dirLabel(g.d);
-    html += `<li>
-      <span class="move-plate">Plate ${g.plate}</span>
-      <span class="move-dir ${d.arrow==='▼'?'neg':''}">${d.key} ${d.arrow}</span>
-      ${g.count>1?`<span class="move-x">× ${g.count}</span>`:''}
-    </li>`;
-    plainText.push(`Plate ${g.plate} → ${d.key} ${d.arrow}${g.count>1?' ×'+g.count:''}`);
+    const d=dl(g.d);
+    items+=`<li><span class="move-plate">Plate ${g.plate}</span><span class="move-dir ${d.key==='R'?'neg':''}">${d.key}</span>${g.count>1?`<span class="move-x">× ${g.count}</span>`:''}</li>`;
+    pt.push(`Plate ${g.plate} → ${d.key}${g.count>1?' ×'+g.count:''}`);
   });
-  html += `</ul>`;
-  html += `<div class="result-actions">
-    <button class="ghost-btn" onclick="copyResult()">Copy list</button>
-    <button class="ghost-btn" onclick="document.getElementById('result').innerHTML=''">Hide</button>
-  </div>`;
-  resDiv.innerHTML = html;
-  resDiv.dataset.plain = plainText.join('\n');
+
+  if(isDesktop){
+    html += `<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions"><button class="ghost-btn" onclick="copyResult()">Copy list</button><button class="ghost-btn" onclick="clearCalcResult()">Hide</button></div>`;
+  } else {
+    html += `<ul class="move-list">${items}</ul><div class="result-actions"><button class="ghost-btn" onclick="copyResult()">Copy list</button><button class="ghost-btn" onclick="document.getElementById('result').innerHTML=''">Hide</button></div>`;
+  }
+  container.innerHTML=html;
+  container.dataset.plain=pt.join('\n');
+}
+
+function clearCalcResult(){
+  document.getElementById('calc-result').innerHTML = '';
 }
 
 function copyResult(){
-  const text = document.getElementById('result').dataset.plain || '';
-  navigator.clipboard.writeText(text).then(()=>{
-    const btn = event.target;
-    const old = btn.textContent;
-    btn.textContent = 'Copied ✓';
-    setTimeout(()=>btn.textContent=old, 1400);
-  });
+  const calcResult=document.getElementById('calc-result'),mobileResult=document.getElementById('result');
+  const text=(calcResult&&calcResult.dataset.plain)||(mobileResult&&mobileResult.dataset.plain)||'';
+  navigator.clipboard.writeText(text).then(()=>{const btn=event.target,old=btn.textContent;btn.textContent='Copied ✓';setTimeout(()=>btn.textContent=old,1400);});
 }
 
-// init
-renderHolesRow();
-initPins();
-renderLock();
+// re-render into the newly visible SVG whenever a breakpoint is crossed
+// (window resize on desktop, rotation on tablets/phones)
+window.matchMedia('(min-width:901px)').addEventListener('change', renderLock);
+window.matchMedia('(min-width:501px) and (max-width:900px)').addEventListener('change', renderLock);
+
+renderHolesRow();initPins();renderLock();
 </script>
 </body>
 </html>
