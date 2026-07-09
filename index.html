@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lockpick Solver</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -27,6 +28,8 @@
     font-family:'Inter',sans-serif;
     padding:32px 18px 60px;
     min-height:100vh;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .wrap{max-width:880px;margin:0 auto;}
 
@@ -129,15 +132,12 @@
     max-width:100%;
     height:auto;
     margin:0 auto;
-    /* min-width удалён, чтобы не растягивать маленькие схемы */
   }
   .plate-bar{stroke:#453a28;stroke-width:15;stroke-linecap:round;cursor:ns-resize;touch-action:none;}
   .drag-hit{cursor:ns-resize;touch-action:none;}
   .pin-line{stroke:var(--brass-bright);stroke-width:2;opacity:.5;}
-  .slide-arrow{fill:#2a2115;stroke:var(--steel-dim);stroke-width:1;cursor:pointer;transition:.15s;}
-  .slide-arrow:hover{fill:var(--brass);stroke:var(--brass-bright);}
   .solved-ring{fill:none;stroke:#5fae5a;stroke-width:1.5;opacity:.85;pointer-events:none;}
-  .hole-circle{fill:#0c0906;stroke:var(--steel-dim);stroke-width:1.5;cursor:ns-resize;touch-action:none;transition:.12s;}
+  .hole-circle{fill:#0c0906;stroke:var(--steel-dim);stroke-width:1.5;cursor:pointer;touch-action:none;transition:.12s;}
   .hole-circle:hover{stroke:var(--brass-bright);stroke-width:2.5;}
   .hole-circle.center-hint{stroke:var(--steel);stroke-width:2;stroke-dasharray:1.5 2.5;}
   .hole-circle.pin{fill:var(--brass-bright);stroke:var(--brass);stroke-width:2;
@@ -210,8 +210,49 @@
   .ghost-btn:hover{border-color:var(--brass);color:var(--brass-bright);}
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
-  @media (max-width:520px){
-    .plate-config-btn{font-size:18px;padding:12px 0;}
+
+  /* MOBILE (кнопки сброса в ряд, SVG на всю ширину) */
+  .reset-row{display:contents;}
+
+  @media (max-width:700px), (pointer:coarse) and (max-width:900px){
+    body{padding:14px 10px 40px;-webkit-tap-highlight-color:transparent;}
+    .hero{margin-bottom:22px;}
+    .sub{font-size:13px;}
+    .panel{padding:16px 12px 20px;}
+    .panel .hint{font-size:12.5px;}
+
+    .plate-config-btn{font-size:22px;padding:16px 0;min-width:64px;}
+
+    .lock-area .lock-wrap{max-width:100%;margin:8px auto 0;}
+    #lockSvg{
+      width:100% !important;
+      height:auto !important;
+    }
+    /* На мобильных устройствах отключаем перетаскивание — только клики по отверстиям */
+    .plate-bar, .drag-hit, .hole-circle {
+      touch-action: auto !important;
+      cursor: pointer !important;
+    }
+    .plate-bar, .drag-hit {
+      pointer-events: none !important; /* полностью игнорируем для скролла */
+    }
+
+    .reset-row{display:flex;gap:10px;margin-top:14px;}
+    .reset-btn{
+      position:static;transform:none;
+      flex:1;width:auto;height:60px;
+      flex-direction:row;gap:10px;
+    }
+    .reset-btn:active{transform:scale(.96);}
+    .reset-btn .sym{font-size:24px;}
+    .reset-btn .cap{font-size:11.5px;}
+    .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
+
+    .legend{justify-content:center;}
+    .solve-btn{padding:17px;font-size:17px;}
+    .ghost-btn{flex:1;padding:12px 16px;text-align:center;}
+    .move-list li{font-size:13px;}
+    .move-plate{min-width:70px;}
   }
 </style>
 </head>
@@ -236,12 +277,14 @@
 
   <div class="panel">
     <h2>Lock Scheme</h2>
-    <p class="hint">Drag a plate up/down (grab anywhere on it), use ▲ ▼, or click a hole directly. Dashed hole = target. To link plates: click one «P» circle, then another (repeat clicks cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
+    <p class="hint">Drag a plate up/down (grab anywhere on it) or click a hole directly. Dashed hole = target. To link plates: click one «P» circle, then another (repeat clicks cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
     <div class="lock-area">
       <div class="lock-wrap">
         <svg id="lockSvg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"></svg>
-        <button class="reset-btn" id="resetSeqBtn" onclick="resetSequences()" title="Reset all plate links"><span class="sym">⟲</span><span class="cap">reset<br>sequences</span></button>
-        <button class="reset-btn" id="resetPlatesBtn" onclick="resetPlates()" title="Reset pins to center"><span class="sym">⟲</span><span class="cap">reset<br>plates</span></button>
+        <div class="reset-row">
+          <button class="reset-btn" id="resetSeqBtn" onclick="resetSequences()" title="Reset all plate links"><span class="sym">⟲</span><span class="cap">reset<br>links</span></button>
+          <button class="reset-btn" id="resetPlatesBtn" onclick="resetPlates()" title="Reset pins to center"><span class="sym">⟲</span><span class="cap">reset<br>plates</span></button>
+        </div>
       </div>
     </div>
     <div class="legend">
@@ -364,7 +407,7 @@ function computeLayout(arcSpace){
 
   const holesHalfHeight = (numHoles-1)*holeSpacing;
 
-  const nodeY = topMargin + topBulge + ARC.labelPad;
+  const nodeY = topMargin + Math.ceil(topBulge/2) + ARC.labelPad;
   const belowNodeDip = botBulge/2 + 14;
   const topArrowY = nodeY + nodeR + Math.max(arrowGap, belowNodeDip) + arrowSize;
   const centerY = topArrowY + arrowClearance + holesHalfHeight;
@@ -415,35 +458,28 @@ function computeArcLevels(){
   return {bulges:{...s.bulges, ...o.bulges}, topBulge:s.maxBulge, bottomBulge:o.maxBulge};
 }
 
-function arrowPolygonPointsV(cx,cy,size,dir){
-  if(dir<0) return `${cx-size},${cy+size} ${cx},${cy-size} ${cx+size},${cy+size}`;
-  return `${cx-size},${cy-size} ${cx},${cy+size} ${cx+size},${cy-size}`;
-}
-
-function stepPin(p,delta){
-  let v = pinPositions[p-1]+delta;
-  if(v<1) v=1;
-  if(v>numHoles) v=numHoles;
-  pinPositions[p-1]=v;
-  renderLock();
-}
-
 let dragState = null;
 
 function getPointerY(e){
   const svg = document.getElementById('lockSvg');
   const rect = svg.getBoundingClientRect();
-  const vb = (svg.getAttribute('viewBox')||'0 0 100 100').split(/\s+/).map(Number);
-  const scaleY = rect.height ? (vb[3]/rect.height) : 1;
+  const vb = svg.viewBox.baseVal;
+  const scaleY = rect.height ? (vb.height / rect.height) : 1;
   const clientY = (e.touches && e.touches.length) ? e.touches[0].clientY : e.clientY;
-  return (clientY-rect.top)*scaleY + vb[1];
+  return (clientY-rect.top)*scaleY + vb.y;
 }
 
 function startDrag(e,p){
+  // На мобильных устройствах drag отключён через CSS pointer-events, но на всякий случай проверяем
+  if(window.matchMedia('(max-width:700px), (pointer:coarse) and (max-width:900px)').matches) return;
   e.preventDefault();
   dragState = {plate:p, startY:getPointerY(e), startH:pinPositions[p-1]};
   window.addEventListener('pointermove', onDragMove);
   window.addEventListener('pointerup', onDragEnd);
+  window.addEventListener('pointercancel', onDragEnd);
+  if(e.target.setPointerCapture && e.pointerId!==undefined){
+    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+  }
 }
 
 function onDragMove(e){
@@ -464,6 +500,7 @@ function onDragEnd(){
   dragState = null;
   window.removeEventListener('pointermove', onDragMove);
   window.removeEventListener('pointerup', onDragEnd);
+  window.removeEventListener('pointercancel', onDragEnd);
 }
 
 function addArcEdge(svg,i,j,L,bulges){
@@ -521,6 +558,9 @@ function renderLock(){
 
   const center = centerOf(numHoles);
 
+  // Определяем, мобильное ли устройство, чтобы не вешать drag на отверстия
+  const isMobile = window.matchMedia('(max-width:700px), (pointer:coarse) and (max-width:900px)').matches;
+
   for(let p=1;p<=numPlates;p++){
     const x = colX(p,L);
     const h = pinPositions[p-1];
@@ -533,11 +573,11 @@ function renderLock(){
       x:x-14, y:L.topArrowY-6, width:28, height:(L.bottomArrowY-L.topArrowY)+12,
       fill:'transparent'
     });
-    hit.addEventListener('pointerdown', (e)=>startDrag(e,p));
+    if(!isMobile) hit.addEventListener('pointerdown', (e)=>startDrag(e,p));
     svg.appendChild(hit);
 
     const bar = svgEl('line',{class:'plate-bar', x1:x, y1:yStart-9, x2:x, y2:yEnd+9});
-    bar.addEventListener('pointerdown', (e)=>startDrag(e,p));
+    if(!isMobile) bar.addEventListener('pointerdown', (e)=>startDrag(e,p));
     svg.appendChild(bar);
 
     for(let k=1;k<=numHoles;k++){
@@ -548,20 +588,20 @@ function renderLock(){
       if(isCurrent) cls+=' pin';
       else if(isGoalHole) cls+=' center-hint';
       const circle = svgEl('circle',{class:cls, cx:x, cy:hy, r:isCurrent?8.5:6.5});
-      circle.addEventListener('pointerdown', (e)=>startDrag(e,p));
-      circle.addEventListener('click', ()=>setPin(p,k));
+      if(!isMobile){
+        circle.addEventListener('pointerdown', (e)=>startDrag(e,p));
+        circle.addEventListener('click', ()=>setPin(p,k));
+      } else {
+        // Мобильная версия: только клик для мгновенного перемещения
+        circle.addEventListener('click', ()=>setPin(p,k));
+      }
       svg.appendChild(circle);
     }
     if(h===center){
       svg.appendChild(svgEl('circle',{class:'solved-ring', cx:x, cy:L.centerY, r:13}));
     }
 
-    const upArrow = svgEl('polygon',{class:'slide-arrow', points:arrowPolygonPointsV(x,L.topArrowY,L.arrowSize,-1)});
-    upArrow.addEventListener('click', ()=>stepPin(p,1));
-    svg.appendChild(upArrow);
-    const downArrow = svgEl('polygon',{class:'slide-arrow', points:arrowPolygonPointsV(x,L.bottomArrowY,L.arrowSize,1)});
-    downArrow.addEventListener('click', ()=>stepPin(p,-1));
-    svg.appendChild(downArrow);
+    // arrows removed
 
     const nodeCircle = svgEl('circle',{
       class:'plate-node'+(selectedNode===p?' selected':''),
