@@ -104,14 +104,17 @@
     box-shadow:0 0 12px rgba(192,138,62,.25);
   }
 
-  .lock-area{display:flex;align-items:center;justify-content:center;}
+  .lock-area{display:flex;align-items:center;justify-content:center;position:relative;}
   .lock-area .lock-wrap{position:relative;margin:10px auto 0;overflow:visible; text-align:center;}
+
+  /* RESET BUTTONS — десктоп (абсолютное позиционирование внутри lock-wrap) */
   .reset-btn{
     position:absolute;right:-100px;transform:translateY(-50%);
     width:86px;height:104px;border-radius:12px;
     border:1px solid var(--steel-dim);background:#1c150d;color:var(--brass-bright);
     cursor:pointer;transition:border-color .15s, background .15s;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+    z-index:10;
   }
   .reset-btn .sym{font-size:30px;line-height:1;}
   .reset-btn .cap{font-size:11px;line-height:1.25;color:var(--parchment);font-family:'JetBrains Mono',monospace;letter-spacing:.02em;text-align:center;}
@@ -157,7 +160,24 @@
   .edge-arrow{pointer-events:none;stroke:var(--void);stroke-width:1.5;}
   .edge-arrow.same{fill:var(--brass-bright);}
   .edge-arrow.opp{fill:var(--rust-bright);}
-  .legend{display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center;row-gap:8px;}
+
+  /* GUIDE LINES */
+  .guide-line{
+    width:100%;
+    height:1px;
+    background:linear-gradient(90deg, transparent 0%, var(--steel-dim) 20%, var(--brass) 50%, var(--steel-dim) 80%, transparent 100%);
+    margin:0;
+    opacity:0.6;
+  }
+  .guide-line.top{
+    margin-bottom:16px;
+  }
+  .guide-line.bottom{
+    margin-top:14px;
+    margin-bottom:14px;
+  }
+
+  .legend{display:flex;gap:16px;margin-top:0;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center;row-gap:8px;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .legend i{width:16px;height:16px;border-radius:4px;display:inline-block;border:1px solid #3a2f1e;}
   .legend i.same{background:linear-gradient(180deg,#2c2210,#1c1608);border-color:var(--brass);}
@@ -211,10 +231,10 @@
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
 
-  /* MOBILE (кнопки сброса в ряд, SVG на всю ширину) */
+  /* MOBILE */
   .reset-row{display:contents;}
 
-  @media (max-width:700px), (pointer:coarse) and (max-width:900px){
+  @media (max-width:900px){
     body{padding:14px 10px 40px;-webkit-tap-highlight-color:transparent;}
     .hero{margin-bottom:22px;}
     .sub{font-size:13px;}
@@ -223,36 +243,90 @@
 
     .plate-config-btn{font-size:22px;padding:16px 0;min-width:64px;}
 
-    .lock-area .lock-wrap{max-width:100%;margin:8px auto 0;}
+    .lock-area .lock-wrap{
+      max-width:100%;
+      margin:8px auto 0;
+    }
     #lockSvg{
       width:100% !important;
       height:auto !important;
     }
-    /* На мобильных устройствах отключаем перетаскивание — только клики по отверстиям */
     .plate-bar, .drag-hit, .hole-circle {
       touch-action: auto !important;
       cursor: pointer !important;
     }
     .plate-bar, .drag-hit {
-      pointer-events: none !important; /* полностью игнорируем для скролла */
+      pointer-events: none !important;
     }
 
-    .reset-row{display:flex;gap:10px;margin-top:14px;}
-    .reset-btn{
-      position:static;transform:none;
-      flex:1;width:auto;height:60px;
-      flex-direction:row;gap:10px;
-    }
-    .reset-btn:active{transform:scale(.96);}
-    .reset-btn .sym{font-size:24px;}
-    .reset-btn .cap{font-size:11.5px;}
-    .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
+    .guide-line.top{margin-bottom:14px;}
+    .guide-line.bottom{margin-top:12px;margin-bottom:12px;}
 
     .legend{justify-content:center;}
     .solve-btn{padding:17px;font-size:17px;}
     .ghost-btn{flex:1;padding:12px 16px;text-align:center;}
     .move-list li{font-size:13px;}
     .move-plate{min-width:70px;}
+
+    /* ПОРТРЕТ: кнопки сброса внизу */
+    @media (max-width:500px){
+      .reset-row{
+        display:flex;gap:10px;margin-top:14px;
+      }
+      .reset-btn{
+        position:static;transform:none;
+        flex:1;width:auto;height:60px;
+        flex-direction:row;gap:10px;
+      }
+      .reset-btn:active{transform:scale(.96);}
+      .reset-btn .sym{font-size:24px;}
+      .reset-btn .cap{font-size:11.5px;}
+      .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
+    }
+
+    /* ЛАНДШАФТ: кнопки сброса справа между направляющими */
+    @media (min-width:501px){
+      .lock-area .lock-wrap{
+        overflow-x: visible !important;
+      }
+      .reset-row{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 72px;
+        margin-left: 12px;
+        margin-right: 10px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 10px;
+        align-self: flex-start;
+      }
+      .reset-btn{
+        position: static;
+        transform: none;
+        width: 72px;
+        height: 80px;
+        flex-direction: column;
+        gap: 4px;
+        border-radius: 10px;
+        z-index: 100;
+      }
+      .reset-btn .sym{font-size: 24px;}
+      .reset-btn .cap{font-size: 9px;}
+      #lockSvg{
+        max-width: 420px !important;
+        width: auto !important;
+        margin: 0 auto;
+      }
+      .lock-wrap{
+        display: flex;
+        align-items: flex-start;
+        gap: 0;
+      }
+      .lock-wrap svg{
+        flex-shrink: 0;
+      }
+    }
   }
 </style>
 </head>
@@ -275,10 +349,13 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="lockSchemePanel">
     <h2>Lock Scheme</h2>
     <p class="hint">Drag a plate up/down (grab anywhere on it) or click a hole directly. Dashed hole = target. To link plates: click one «P» circle, then another (repeat clicks cycle: <b style="color:var(--brass-bright)">same</b> → <b style="color:var(--rust-bright)">opposite</b> → none).</p>
-    <div class="lock-area">
+
+    <div class="guide-line top"></div>
+
+    <div class="lock-area" id="lockArea">
       <div class="lock-wrap">
         <svg id="lockSvg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="reset-row">
@@ -287,6 +364,9 @@
         </div>
       </div>
     </div>
+
+    <div class="guide-line bottom"></div>
+
     <div class="legend">
       <span><i class="same"></i> same direction</span>
       <span><i class="opp"></i> opposite</span>
@@ -303,8 +383,8 @@
 </div>
 
 <script>
-let numPlates = 6;        // default
-let numHoles = 7;         // fixed
+let numPlates = 6;
+let numHoles = 7;
 let relations = {};
 
 function keyOf(i,j){return i+'-'+j;}
@@ -470,8 +550,7 @@ function getPointerY(e){
 }
 
 function startDrag(e,p){
-  // На мобильных устройствах drag отключён через CSS pointer-events, но на всякий случай проверяем
-  if(window.matchMedia('(max-width:700px), (pointer:coarse) and (max-width:900px)').matches) return;
+  if(window.matchMedia('(max-width:900px)').matches) return;
   e.preventDefault();
   dragState = {plate:p, startY:getPointerY(e), startH:pinPositions[p-1]};
   window.addEventListener('pointermove', onDragMove);
@@ -537,9 +616,33 @@ function renderLock(){
 
   const seqBtn = document.getElementById('resetSeqBtn');
   const platesBtn = document.getElementById('resetPlatesBtn');
-  if(seqBtn && platesBtn){
+  const isDesktop = window.matchMedia('(min-width:901px)').matches;
+  const isLandscape = window.matchMedia('(min-width:501px) and (max-width:900px)').matches;
+
+  if(isDesktop && seqBtn && platesBtn){
+    seqBtn.style.position = 'absolute';
+    seqBtn.style.right = '-100px';
     seqBtn.style.top = (L.nodeY / L.height * 100) + '%';
+    seqBtn.style.transform = 'translateY(-50%)';
+    seqBtn.style.width = '86px';
+    seqBtn.style.height = '104px';
+
+    platesBtn.style.position = 'absolute';
+    platesBtn.style.right = '-100px';
     platesBtn.style.top = (L.centerY / L.height * 100) + '%';
+    platesBtn.style.transform = 'translateY(-50%)';
+    platesBtn.style.width = '86px';
+    platesBtn.style.height = '104px';
+  }
+
+  if(isLandscape && seqBtn && platesBtn){
+    seqBtn.style.position = 'static';
+    seqBtn.style.width = '72px';
+    seqBtn.style.height = '80px';
+
+    platesBtn.style.position = 'static';
+    platesBtn.style.width = '72px';
+    platesBtn.style.height = '80px';
   }
 
   const leftX = colX(1,L);
@@ -557,9 +660,7 @@ function renderLock(){
   }
 
   const center = centerOf(numHoles);
-
-  // Определяем, мобильное ли устройство, чтобы не вешать drag на отверстия
-  const isMobile = window.matchMedia('(max-width:700px), (pointer:coarse) and (max-width:900px)').matches;
+  const isMobile = window.matchMedia('(max-width:900px)').matches;
 
   for(let p=1;p<=numPlates;p++){
     const x = colX(p,L);
@@ -592,7 +693,6 @@ function renderLock(){
         circle.addEventListener('pointerdown', (e)=>startDrag(e,p));
         circle.addEventListener('click', ()=>setPin(p,k));
       } else {
-        // Мобильная версия: только клик для мгновенного перемещения
         circle.addEventListener('click', ()=>setPin(p,k));
       }
       svg.appendChild(circle);
@@ -600,8 +700,6 @@ function renderLock(){
     if(h===center){
       svg.appendChild(svgEl('circle',{class:'solved-ring', cx:x, cy:L.centerY, r:13}));
     }
-
-    // arrows removed
 
     const nodeCircle = svgEl('circle',{
       class:'plate-node'+(selectedNode===p?' selected':''),
