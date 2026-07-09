@@ -520,9 +520,10 @@ function getPointerY(e){
 }
 function startDrag(e,p){
   if(window.matchMedia('(max-width:900px)').matches)return;
+  invalidateFollow();
   e.preventDefault();dragState={plate:p,startY:getPointerY(e),startH:pinPositions[p-1]};
   window.addEventListener('pointermove',onDragMove);window.addEventListener('pointerup',onDragEnd);window.addEventListener('pointercancel',onDragEnd);
-  if(e.target.setPointerCapture&&e.pointerId!==undefined)try{e.target.setPointerCapture(e.pointerId)}catch(_){}
+  if(e.target&&e.target.setPointerCapture&&e.pointerId!==undefined)try{e.target.setPointerCapture(e.pointerId)}catch(_){}
 }
 function onDragMove(e){
   if(!dragState)return;
@@ -654,7 +655,7 @@ function runSolve(){
 }
 
 // ================= result rendering & follow mode =================
-let lastGrouped=null, lastTotal=0, followState=null;
+let lastGrouped=null, lastTotal=0, followState=null, lastStart=null;
 
 function dirKey(d){return d===1?'L':'R';}
 
@@ -677,6 +678,7 @@ function buildMoveItems(activeIdx){
 
 function renderResult(path,container,isDesktop){
   lastTotal=path.length;
+  lastStart=pinPositions.slice(); // solve runs from the current state
   lastGrouped=[];
   for(const mv of path){const last=lastGrouped[lastGrouped.length-1];if(last&&last.plate===mv.plate&&last.d===mv.d)last.count++;else lastGrouped.push({plate:mv.plate,d:mv.d,count:1});}
   const pt=lastGrouped.map(g=>`Plate ${g.plate} → ${dirKey(g.d)}${g.count>1?' ×'+g.count:''}`);
@@ -708,7 +710,19 @@ function hideResult(){
 // ---- follow mode: step through the solution right on the scheme ----
 function startFollow(){
   if(!lastGrouped||!lastGrouped.length)return;
-  followState={gi:0};
+  if(!lastStart || lastStart.length!==pinPositions.length || lastStart.join(',')!==pinPositions.join(',')){
+    const {container}=activeResultContainer();
+    if(container){
+      const warn=document.createElement('div');
+      warn.className='status err';
+      warn.textContent='The lock has changed since the last calculation — press Calculate Sequence again before following.';
+      container.insertBefore(warn, container.firstChild);
+      setTimeout(()=>{ if(warn.parentNode) warn.parentNode.removeChild(warn); }, 4000);
+    }
+    return;
+  }
+  // snapshot history: history[i] = plate positions BEFORE step i
+  followState={gi:0, history:[pinPositions.slice()]};
   renderLock();
   renderFollowUI();
 }
@@ -735,6 +749,7 @@ function nextFollowStep(){
   if(followState.gi>=lastGrouped.length)return;
   applyGroup(lastGrouped[followState.gi],1);
   followState.gi++;
+  followState.history[followState.gi]=pinPositions.slice();
   renderLock();
   renderFollowUI();
 }
@@ -742,7 +757,9 @@ function nextFollowStep(){
 function backFollowStep(){
   if(!followState||!lastGrouped||followState.gi<=0)return;
   followState.gi--;
-  applyGroup(lastGrouped[followState.gi],-1);
+  // restore the exact snapshot instead of computing inverse moves —
+  // immune to any drift, clamping, or mid-follow edits
+  pinPositions=followState.history[followState.gi].slice();
   renderLock();
   renderFollowUI();
 }
