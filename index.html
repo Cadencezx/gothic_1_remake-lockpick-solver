@@ -14,7 +14,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lockpick Solver</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --void:#14100c;
@@ -49,43 +49,50 @@
     --accent-rgb:192,138,62;
     --glow-rgb:226,172,92;
     --rust-glow-rgb:198,90,63;
+    --gold-badge:#e2ac5c;
   }
 
-  /* Stylized light theme — aged parchment & ink, same brass/rust accent
-     family, just re-tuned for contrast on a light background. */
+  /* Stylized light theme. Not a value-inverted mirror of the dark theme:
+     brass stays vivid/saturated (not just darkened), structural text and
+     grays shift to a genuinely NEUTRAL desaturated ink instead of reusing
+     brass's own hue, panel vs background differ in hue+saturation (not
+     only lightness), and the accent "glow" variables become dark, low-key
+     shadow tones instead of bright halos — glows read as light-on-dark,
+     shadows read as dark-on-light. */
   [data-theme="light"]{
-    --void:#f2e8d0;
-    --panel:#fbf4e3;
-    --panel-2:#f0e2bf;
-    --steel:#6c6046;
-    --steel-dim:#c3b28c;
-    --brass:#9c6c26;
-    --brass-bright:#7e5419;
-    --parchment:#2b2013;
-    --muted:#8a7a5a;
-    --rust:#96392a;
-    --rust-bright:#a84730;
+    --void:#efe6d7;
+    --panel:#faf7ef;
+    --panel-2:#f2ebde;
+    --steel:#766a60;
+    --steel-dim:#cdc3b7;
+    --brass:#a57327;
+    --brass-bright:#9a621d;
+    --parchment:#28201a;
+    --muted:#806f60;
+    --rust:#cc191f;
+    --rust-bright:#da1c16;
 
-    --surface-1:#efe1bd;
-    --surface-1-hover:#e5d09e;
-    --ink:#fbf4e3;
-    --success-bg:#e2edd7;
-    --success-border:#5c8b4c;
-    --success-text:#2f5924;
-    --divider:#e1cd9c;
-    --chip-bg:#ecdbae;
-    --dot-a:#dcc99b;
-    --dot-b:#b89c66;
-    --dot-lit-end:#c08a2e;
-    --panel-border:#c9b184cc;
-    --plate-bar:#c2a877;
-    --success-ring:#3f7a33;
-    --hole-empty:#e7d9b3;
-    --error-bg:#f3ddd6;
-    --error-text:#7c2b1c;
-    --accent-rgb:156,108,38;
-    --glow-rgb:126,84,25;
-    --rust-glow-rgb:168,71,48;
+    --surface-1:#e6dbcc;
+    --surface-1-hover:#dfcfb9;
+    --ink:#fbf8f4;
+    --success-bg:#e3edde;
+    --success-border:#568b4b;
+    --success-text:#295625;
+    --divider:#dacdbe;
+    --chip-bg:#e4e0dd;
+    --gold-badge:#935f06;
+    --dot-a:#d5c8b9;
+    --dot-b:#b7a58f;
+    --dot-lit-end:#bd7f28;
+    --panel-border:#cdc3b7bb;
+    --plate-bar:#a79481;
+    --success-ring:#3b8830;
+    --hole-empty:#d2c6b6;
+    --error-bg:#f4dad7;
+    --error-text:#72251d;
+    --accent-rgb:126,89,37;
+    --glow-rgb:89,61,34;
+    --rust-glow-rgb:119,34,37;
   }
   *{box-sizing:border-box;}
   body{
@@ -141,6 +148,7 @@
   /* Lock Setup header row: title + share-link button */
   .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
   .panel-head h2{margin:0;}
+  .head-actions{display:flex;gap:8px;flex-wrap:wrap;}
   .share-btn{
     background:transparent;border:1px solid var(--steel-dim);color:var(--muted);
     padding:7px 13px;border-radius:8px;font-family:'Inter',sans-serif;font-size:12.5px;
@@ -259,7 +267,7 @@
     font-weight:700;
     border-radius:5px;
     background:var(--chip-bg);
-    color:var(--brass-bright);
+    color:var(--gold-badge);
     border:1px solid var(--brass);
   }
   .move-dir.neg{color:var(--rust-bright);border-color:var(--rust);}
@@ -331,6 +339,74 @@
   }
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
+
+  /* keyboard shortcuts modal */
+  .modal-backdrop{
+    position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    animation:modalFadeIn .15s ease;
+  }
+  @keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+  .modal-box{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:22px 24px 20px;
+    max-width:440px;width:100%;
+    max-height:85vh;overflow-y:auto;
+    box-shadow:0 20px 50px -12px rgba(0,0,0,.6);
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  .modal-head h3{
+    font-family:'Cinzel',serif;font-size:16px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--brass-bright);margin:0;font-weight:700;
+  }
+  .modal-close{
+    background:transparent;border:2px solid var(--steel-dim);color:var(--muted);
+    width:30px;height:30px;flex-shrink:0;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
+  }
+  .modal-close:hover{border-color:var(--brass);color:var(--brass-bright);}
+  .shortcut-list{list-style:none;margin:0;padding:0;}
+  .shortcut-list li{
+    display:flex;align-items:flex-start;gap:12px;
+    padding:9px 0;border-bottom:1px solid var(--divider);
+  }
+  .shortcut-list li:last-child{border-bottom:none;}
+  .shortcut-list kbd{
+    flex-shrink:0;min-width:64px;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+    background:var(--chip-bg);color:var(--gold-badge);
+    border:2px solid var(--brass);border-radius:6px;
+    padding:4px 6px;
+  }
+  .shortcut-list span{color:var(--parchment);font-size:13px;line-height:1.45;padding-top:3px;}
+  .modal-note{color:var(--muted);font-size:11.5px;line-height:1.5;margin:14px 0 0;}
+
+  /* Thin 1px borders and regular-weight text read fine on the near-black
+     dark theme (light-on-dark elements look bolder than they measure —
+     irradiation), but the same weights looked washed out on the light
+     theme. Applied to BOTH themes now (not just light) so toggling themes
+     never shifts layout — only colors change, nothing else. */
+  .theme-toggle,
+  .reset-btn,
+  .share-btn,
+  .ghost-btn,
+  .plate-config-btn,
+  .solve-btn,
+  .move-dir{
+    border-width:2px;
+  }
+  .share-btn,
+  .ghost-btn{
+    font-weight:700;
+  }
+  .plate-config-btn,
+  .solve-btn{
+    font-weight:800;
+  }
 
   .reset-row{display:contents;}
 
@@ -435,6 +511,9 @@
     .ghost-btn{flex:1;padding:12px 16px;text-align:center;}
     .move-list li{font-size:13px;}
     .move-plate{min-width:70px;}
+
+    /* Скрываем кнопку Shortcuts на мобильных */
+    .share-btn[onclick*="Shortcuts"]{display:none;}
   }
 
   /* small phones: reset buttons in a roomy row under the scheme */
@@ -487,13 +566,17 @@
   <div class="panel">
     <div class="panel-head">
       <h2>Lock Setup</h2>
-      <button class="share-btn" onclick="copyShareLink()" title="Copy a link that saves this exact lock configuration">🔗 Copy Link</button>
+      <div class="head-actions">
+        <button class="share-btn" onclick="openShortcutsModal()" title="View keyboard shortcuts">⌨ Shortcuts</button>
+        <button class="share-btn" onclick="copyShareLink()" title="Copy a link that saves this exact lock configuration">🔗 Copy Link</button>
+        <button class="share-btn" onclick="pasteConfigFromClipboard()" title="Read a lock link from your clipboard and apply it right here">📋 Paste Link</button>
+      </div>
     </div>
     <div class="plate-config-row" id="plateConfigRow">
-      <button class="plate-config-btn" data-plates="4">4</button>
-      <button class="plate-config-btn" data-plates="5">5</button>
-      <button class="plate-config-btn active" data-plates="6">6</button>
-      <button class="plate-config-btn" data-plates="7">7</button>
+      <button class="plate-config-btn" data-plates="4" title="Tab">4</button>
+      <button class="plate-config-btn" data-plates="5" title="Tab">5</button>
+      <button class="plate-config-btn active" data-plates="6" title="Tab">6</button>
+      <button class="plate-config-btn" data-plates="7" title="Tab">7</button>
     </div>
   </div>
 
@@ -535,7 +618,7 @@
     </div>
 
     <div class="panel calc-panel">
-      <button class="solve-btn" onclick="runSolve()">Calculate Sequence</button>
+      <button class="solve-btn" onclick="runSolve()" title="Enter">Calculate Sequence</button>
       <div class="calc-result-container" id="calc-result"></div>
     </div>
   </div>
@@ -578,7 +661,7 @@
 
   <!-- Общие элементы управления (для мобильной версии) -->
   <div class="original-controls">
-    <button class="solve-btn" onclick="runSolve()">Calculate Sequence</button>
+    <button class="solve-btn" onclick="runSolve()" title="Enter">Calculate Sequence</button>
     <div id="result"></div>
   </div>
 
@@ -840,13 +923,13 @@ function renderStaticResult(){
   let html;
   if(isDesktop){
     // mirror the follow-mode grid: Follow sits exactly where Next will appear
-    const followRow=`<div class="action-row"><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn follow-btn" onclick="startFollow()">Follow ▶</button></div>`;
+    const followRow=`<div class="action-row"><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn follow-btn" onclick="startFollow()" title="Space">Follow ▶</button></div>`;
     const exitRow=`<div class="action-row"><button class="ghost-btn" disabled>Exit</button></div>`;
     const bottomRow=`<div class="action-row">${hideBtn}${copyBtn}</div>`;
     html=statusHtml+`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${followRow}${exitRow}${bottomRow}</div>`;
   }else{
     // sidebar from the start: Follow occupies the exact spot Next will take
-    const sideButtons=`<button class="ghost-btn follow-btn" onclick="startFollow()">Follow ▶</button><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn" disabled>Exit</button>${hideBtn}${copyBtn}`;
+    const sideButtons=`<button class="ghost-btn follow-btn" onclick="startFollow()" title="Space">Follow ▶</button><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn" disabled>Exit</button>${hideBtn}${copyBtn}`;
     html=`<div class="follow-flex"><div class="m-list-box"><ul class="move-list">${items}</ul></div><div class="follow-side"><div class="follow-sticky">${statusHtml}${sideButtons}</div></div></div>`;
   }
   container.innerHTML=html;
@@ -993,10 +1076,10 @@ function renderFollowUI(){
   }
   const items=buildMoveItems(finished?n:gi);
   const backBtn=finished
-    ?`<button class="ghost-btn" onclick="backToStart()">◀ Back to start</button>`
-    :`<button class="ghost-btn" onclick="backFollowStep()" ${gi===0?'disabled':''}>◀ Back</button>`;
-  const nextBtn=finished?'':`<button class="ghost-btn follow-btn" onclick="nextFollowStep()">Next ▶</button>`;
-  const exitBtn=`<button class="ghost-btn exit-live" onclick="exitFollow()">Exit</button>`;
+    ?`<button class="ghost-btn" onclick="backToStart()" title="R or Space">◀ Back to start</button>`
+    :`<button class="ghost-btn" onclick="backFollowStep()" ${gi===0?'disabled':''} title="R">◀ Back</button>`;
+  const nextBtn=finished?'':`<button class="ghost-btn follow-btn" onclick="nextFollowStep()" title="Space">Next ▶</button>`;
+  const exitBtn=`<button class="ghost-btn exit-live" onclick="exitFollow()" title="Esc">Exit</button>`;
   const copyBtn=`<button class="ghost-btn" onclick="copyResult()">Copy list</button>`;
   const hideBtn=isDesktop
     ?`<button class="ghost-btn" onclick="clearCalcResult()">Hide</button>`
@@ -1111,8 +1194,10 @@ function copyShareLink(){
   });
 }
 
-function loadFromURL(){
-  const params=new URLSearchParams(window.location.search);
+// Parses ?p=..&pins=..&links=.. and applies it to the live state. Shared by
+// both the initial page-load URL check and the "Paste Link" button, so the
+// two paths can never drift out of sync.
+function applyConfigFromParams(params){
   const pinsStr=params.get('pins');
   if(!pinsStr)return false;
   let p=parseInt(params.get('p'),10);
@@ -1136,6 +1221,158 @@ function loadFromURL(){
   }
   return true;
 }
+
+function loadFromURL(){
+  return applyConfigFromParams(new URLSearchParams(window.location.search));
+}
+
+// Accepts either a full pasted URL or just its query string ("?p=...&pins=...")
+function paramsFromPastedText(text){
+  if(!text)return null;
+  text=text.trim();
+  try{
+    return new URL(text).searchParams;
+  }catch(e){
+    return new URLSearchParams(text.startsWith('?')?text:'?'+text);
+  }
+}
+
+async function pasteConfigFromClipboard(){
+  const btn=event.target.closest('button');
+  const flash=(label)=>{
+    if(!btn)return;
+    const old=btn.textContent;
+    btn.textContent=label;
+    setTimeout(()=>{btn.textContent=old;},1800);
+  };
+  let text;
+  try{
+    text=await navigator.clipboard.readText();
+  }catch(e){
+    flash('Clipboard blocked');
+    return;
+  }
+  const params=paramsFromPastedText(text);
+  if(!params||!applyConfigFromParams(params)){
+    flash('No valid link found');
+    return;
+  }
+  // this replaces the whole configuration, exactly like any other manual
+  // edit: leave follow mode and clear any now-stale calculated result
+  followState=null;
+  lastGrouped=null;
+  selectedNode=null;
+  const r1=document.getElementById('result'); if(r1)r1.innerHTML='';
+  const r2=document.getElementById('calc-result'); if(r2)r2.innerHTML='';
+  document.querySelectorAll('.plate-config-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.plates,10)===numPlates);
+  });
+  renderLock();
+  flash('Applied ✓');
+}
+
+// ================= keyboard shortcuts modal =================
+let shortcutsModalOpen=false;
+
+function openShortcutsModal(){
+  if(shortcutsModalOpen)return;
+  shortcutsModalOpen=true;
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.id='shortcutsBackdrop';
+  backdrop.onclick=closeShortcutsModal;
+  backdrop.innerHTML=`<div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3>Keyboard Shortcuts</h3>
+      <button class="modal-close" onclick="closeShortcutsModal()" aria-label="Close">×</button>
+    </div>
+    <ul class="shortcut-list">
+      <li><kbd>Enter</kbd><span>Calculate the sequence</span></li>
+      <li><kbd>Space</kbd><span>Start Follow mode, or advance to the next step. Loops back to the start once finished — hold it down to cycle through the whole sequence.</span></li>
+      <li><kbd>R</kbd><span>Go back one step (or back to the start, once finished)</span></li>
+      <li><kbd>Esc</kbd><span>Exit Follow mode — the lock returns to exactly how it looked right after Calculate</span></li>
+      <li><kbd>Tab</kbd><span>Cycle the plate count (4 → 5 → 6 → 7 → 4…)</span></li>
+      <li><kbd>Shift+Tab</kbd><span>Cycle the plate count the other way</span></li>
+    </ul>
+    <p class="modal-note">Ignored while typing in a field. Tab is locked while Follow mode is active, same as clicking the plate-count buttons.</p>
+  </div>`;
+  document.body.appendChild(backdrop);
+  const closeBtn=backdrop.querySelector('.modal-close');
+  if(closeBtn)closeBtn.focus();
+}
+
+function closeShortcutsModal(){
+  shortcutsModalOpen=false;
+  const el=document.getElementById('shortcutsBackdrop');
+  if(el)el.remove();
+}
+
+// ================= keyboard shortcuts for Follow mode =================
+// Space: start Follow (if a result is ready) / advance to the next step /
+//        loop back to the start once finished — so you can hold Space to
+//        cycle through the whole sequence repeatedly.
+// R: same as clicking Back (or "Back to start" once finished).
+// Esc: same as clicking Exit — restores the scheme to its post-Calculate state.
+// Enter: same as clicking Calculate Sequence.
+// Tab: cycles the plate-count setup (4→5→6→7→4…), Shift+Tab goes backward.
+//      Blocked while Follow is active, same as clicking those buttons.
+document.addEventListener('keydown', (e)=>{
+  // while the shortcuts modal is open, it owns the keyboard: Esc closes it,
+  // everything else is swallowed so it can't act on the lock in the background
+  if(shortcutsModalOpen){
+    if(e.key==='Escape'||e.key==='Esc'){ e.preventDefault(); closeShortcutsModal(); }
+    return;
+  }
+
+  // don't hijack typing in a field, and don't fight the browser's own
+  // Ctrl/Cmd-modified shortcuts (e.g. Ctrl+R reload)
+  const tag=document.activeElement&&document.activeElement.tagName;
+  const typing=tag==='INPUT'||tag==='TEXTAREA'||(document.activeElement&&document.activeElement.isContentEditable);
+  if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
+
+  if(e.code==='Space'||e.key===' '){
+    if(followState){
+      e.preventDefault();
+      const finished=followState.gi>=lastGrouped.length;
+      if(finished) backToStart();
+      else nextFollowStep();
+    }else if(lastGrouped&&lastGrouped.length){
+      e.preventDefault(); startFollow();
+    }
+    return;
+  }
+
+  if(e.key==='Escape'||e.key==='Esc'){
+    if(followState){ e.preventDefault(); exitFollow(); }
+    return;
+  }
+
+  if(e.key==='r'||e.key==='R'){
+    if(followState){
+      e.preventDefault();
+      const finished=followState.gi>=lastGrouped.length;
+      if(finished) backToStart();
+      else if(followState.gi>0) backFollowStep();
+    }
+    return;
+  }
+
+  if(e.key==='Enter'){
+    e.preventDefault();
+    runSolve();
+    return;
+  }
+
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const order=[4,5,6,7];
+    const idx=order.indexOf(numPlates);
+    const dir=e.shiftKey?-1:1;
+    const next=order[(idx+dir+order.length)%order.length];
+    selectPlates(next);
+    return;
+  }
+});
 
 const loadedFromURL=loadFromURL();
 renderHolesRow();initPins();
