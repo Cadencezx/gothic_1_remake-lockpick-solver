@@ -2,6 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+  // Applied synchronously, before CSS paints, so there's no flash of the
+  // wrong theme on load if the visitor previously chose light mode.
+  try{
+    if(localStorage.getItem('lockpickTheme')==='light'){
+      document.documentElement.setAttribute('data-theme','light');
+    }
+  }catch(e){}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lockpick Solver</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +28,64 @@
     --muted:#9c9184;
     --rust:#a6432f;
     --rust-bright:#c65a3f;
+
+    --surface-1:#1c150d;
+    --surface-1-hover:#2c2210;
+    --ink:#20160a;
+    --success-bg:#1a2418;
+    --success-border:#3f6b3a;
+    --success-text:#9fd695;
+    --divider:#2a2115;
+    --chip-bg:#241c13;
+    --dot-a:#3a332a;
+    --dot-b:#0c0a07;
+    --dot-lit-end:#6b4a1e;
+    --panel-border:#38301fbb;
+    --plate-bar:#453a28;
+    --success-ring:#5fae5a;
+    --hole-empty:#0c0906;
+    --error-bg:#241413;
+    --error-text:#f0a08f;
+    --accent-rgb:192,138,62;
+    --glow-rgb:226,172,92;
+    --rust-glow-rgb:198,90,63;
+  }
+
+  /* Stylized light theme — aged parchment & ink, same brass/rust accent
+     family, just re-tuned for contrast on a light background. */
+  [data-theme="light"]{
+    --void:#f2e8d0;
+    --panel:#fbf4e3;
+    --panel-2:#f0e2bf;
+    --steel:#6c6046;
+    --steel-dim:#c3b28c;
+    --brass:#9c6c26;
+    --brass-bright:#7e5419;
+    --parchment:#2b2013;
+    --muted:#8a7a5a;
+    --rust:#96392a;
+    --rust-bright:#a84730;
+
+    --surface-1:#efe1bd;
+    --surface-1-hover:#e5d09e;
+    --ink:#fbf4e3;
+    --success-bg:#e2edd7;
+    --success-border:#5c8b4c;
+    --success-text:#2f5924;
+    --divider:#e1cd9c;
+    --chip-bg:#ecdbae;
+    --dot-a:#dcc99b;
+    --dot-b:#b89c66;
+    --dot-lit-end:#c08a2e;
+    --panel-border:#c9b184cc;
+    --plate-bar:#c2a877;
+    --success-ring:#3f7a33;
+    --hole-empty:#e7d9b3;
+    --error-bg:#f3ddd6;
+    --error-text:#7c2b1c;
+    --accent-rgb:156,108,38;
+    --glow-rgb:126,84,25;
+    --rust-glow-rgb:168,71,48;
   }
   *{box-sizing:border-box;}
   body{
@@ -35,19 +102,19 @@
 
   .hero{text-align:center;margin-bottom:34px;}
   .holes-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px;opacity:.8;}
-  .hole-dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #3a332a, #0c0a07 70%);border:1px solid var(--steel-dim);}
-  .hole-dot.lit{background:radial-gradient(circle at 35% 30%, var(--brass-bright), var(--brass) 60%, #6b4a1e 100%);border-color:var(--brass);}
+  .hole-dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%, var(--dot-a), var(--dot-b) 70%);border:1px solid var(--steel-dim);}
+  .hole-dot.lit{background:radial-gradient(circle at 35% 30%, var(--brass-bright), var(--brass) 60%, var(--dot-lit-end) 100%);border-color:var(--brass);}
   h1{
     font-family:'Cinzel',serif;font-weight:700;
     font-size:clamp(28px,5vw,42px);letter-spacing:.03em;
     margin:0 0 8px;color:var(--parchment);
-    text-shadow:0 2px 12px rgba(192,138,62,.15);
+    text-shadow:0 2px 12px rgba(var(--accent-rgb),.15);
   }
   .sub{color:var(--muted);font-size:14.5px;max-width:520px;margin:0 auto;line-height:1.5;}
 
   .panel{
     background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid #38301fbb;border-radius:14px;
+    border:1px solid var(--panel-border);border-radius:14px;
     padding:22px 22px 26px;margin-bottom:22px;
     box-shadow:0 12px 30px -14px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.03);
   }
@@ -55,19 +122,44 @@
     font-family:'Cinzel',serif;font-size:15px;letter-spacing:.08em;
     text-transform:uppercase;color:var(--brass-bright);margin:0 0 4px;font-weight:600;
   }
+
+  /* theme toggle: fixed icon button, top-right of the whole page */
+  .theme-toggle{
+    position:fixed;top:14px;right:14px;z-index:50;
+    width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--steel-dim);background:var(--surface-1);color:var(--brass-bright);
+    cursor:pointer;transition:border-color .15s, background .15s, transform .2s;
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+  }
+  .theme-toggle:hover{border-color:var(--brass-bright);background:var(--surface-1-hover);}
+  .theme-toggle:active{transform:scale(.9);}
+  .theme-icon{display:none;line-height:1;}
+  .theme-icon-sun{display:inline-block;}
+  [data-theme="light"] .theme-icon-sun{display:none;}
+  [data-theme="light"] .theme-icon-moon{display:inline-block;}
+
+  /* Lock Setup header row: title + share-link button */
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+  .panel-head h2{margin:0;}
+  .share-btn{
+    background:transparent;border:1px solid var(--steel-dim);color:var(--muted);
+    padding:7px 13px;border-radius:8px;font-family:'Inter',sans-serif;font-size:12.5px;
+    cursor:pointer;transition:.15s;white-space:nowrap;
+  }
+  .share-btn:hover{border-color:var(--brass);color:var(--brass-bright);}
   .panel .hint{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.5;}
 
   .plate-config-row{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;}
   .plate-config-btn{
     flex:1 1 0;min-width:80px;padding:14px 0;
-    background:#1c150d;border:1px solid var(--steel-dim);border-radius:10px;
+    background:var(--surface-1);border:1px solid var(--steel-dim);border-radius:10px;
     color:var(--parchment);font-family:'Cinzel',serif;font-size:20px;font-weight:700;
     cursor:pointer;transition:all .15s;text-align:center;line-height:1.2;
   }
-  .plate-config-btn:hover{border-color:var(--brass-bright);background:#2c2210;color:var(--brass-bright);}
+  .plate-config-btn:hover{border-color:var(--brass-bright);background:var(--surface-1-hover);color:var(--brass-bright);}
   .plate-config-btn.active{
     border-color:var(--brass);background:linear-gradient(180deg,var(--brass-bright),var(--brass));
-    color:#20160a;box-shadow:0 0 12px rgba(192,138,62,.25);
+    color:var(--ink);box-shadow:0 0 12px rgba(var(--accent-rgb),.25);
   }
 
   .lock-area{display:flex;align-items:center;justify-content:center;position:relative;}
@@ -75,13 +167,13 @@
   .reset-btn{
     position:absolute;right:-100px;transform:translateY(-50%);
     width:86px;height:104px;border-radius:12px;
-    border:1px solid var(--steel-dim);background:#1c150d;color:var(--brass-bright);
+    border:1px solid var(--steel-dim);background:var(--surface-1);color:var(--brass-bright);
     cursor:pointer;transition:border-color .15s, background .15s;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;z-index:10;
   }
   .reset-btn .sym{font-size:30px;line-height:1;}
   .reset-btn .cap{font-size:11px;line-height:1.25;color:var(--parchment);font-family:'JetBrains Mono',monospace;letter-spacing:.02em;text-align:center;}
-  .reset-btn:hover{border-color:var(--brass-bright);background:#2c2210;}
+  .reset-btn:hover{border-color:var(--brass-bright);background:var(--surface-1-hover);}
   .reset-btn:hover .sym{display:inline-block;transform:rotate(-30deg);transition:transform .15s;}
   .reset-btn:active .sym{transform:rotate(-360deg);transition:transform .4s;}
 
@@ -99,17 +191,17 @@
     height:auto;
     margin:0 auto;
   }
-  .plate-bar{stroke:#453a28;stroke-width:15;stroke-linecap:round;cursor:ns-resize;touch-action:none;}
+  .plate-bar{stroke:var(--plate-bar);stroke-width:15;stroke-linecap:round;cursor:ns-resize;touch-action:none;}
   .drag-hit{cursor:ns-resize;touch-action:none;}
   .pin-line{stroke:var(--brass-bright);stroke-width:2;opacity:.5;}
-  .solved-ring{fill:none;stroke:#5fae5a;stroke-width:1.5;opacity:.85;pointer-events:none;}
-  .hole-circle{fill:#0c0906;stroke:var(--steel-dim);stroke-width:1.5;cursor:pointer;touch-action:none;transition:.12s;}
+  .solved-ring{fill:none;stroke:var(--success-ring);stroke-width:1.5;opacity:.85;pointer-events:none;}
+  .hole-circle{fill:var(--hole-empty);stroke:var(--steel-dim);stroke-width:1.5;cursor:pointer;touch-action:none;transition:.12s;}
   .hole-circle:hover{stroke:var(--brass-bright);stroke-width:2.5;}
   .hole-circle.center-hint{stroke:var(--steel);stroke-width:2;stroke-dasharray:1.5 2.5;}
-  .hole-circle.pin{fill:var(--brass-bright);stroke:var(--brass);stroke-width:2;filter:drop-shadow(0 0 4px rgba(226,172,92,.7));}
-  .plate-node{fill:#1c150d;stroke:var(--steel-dim);stroke-width:2;cursor:pointer;transition:.15s;}
+  .hole-circle.pin{fill:var(--brass-bright);stroke:var(--brass);stroke-width:2;filter:drop-shadow(0 0 4px rgba(var(--glow-rgb),.7));}
+  .plate-node{fill:var(--surface-1);stroke:var(--steel-dim);stroke-width:2;cursor:pointer;transition:.15s;}
   .plate-node:hover{stroke:var(--brass-bright);}
-  .plate-node.selected{fill:#2c2210;stroke:var(--brass-bright);stroke-width:3;filter:drop-shadow(0 0 7px rgba(226,172,92,.55));}
+  .plate-node.selected{fill:var(--surface-1-hover);stroke:var(--brass-bright);stroke-width:3;filter:drop-shadow(0 0 7px rgba(var(--glow-rgb),.55));}
   .node-label-sm{
     font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
     fill:var(--parchment);text-anchor:middle;dominant-baseline:central;pointer-events:none;
@@ -137,7 +229,7 @@
   .solve-btn{
     display:block;width:100%;margin-top:22px;padding:15px;border-radius:10px;border:1px solid var(--brass);
     background:linear-gradient(180deg,var(--brass-bright),var(--brass));
-    color:#20160a;font-family:'Cinzel',serif;font-weight:700;font-size:16px;letter-spacing:.05em;
+    color:var(--ink);font-family:'Cinzel',serif;font-weight:700;font-size:16px;letter-spacing:.05em;
     cursor:pointer;transition:filter .15s, transform .1s;text-transform:uppercase;
   }
   .solve-btn:hover{filter:brightness(1.08);}
@@ -145,18 +237,18 @@
 
   #result{margin-top:22px;}
   .status{font-size:14px;padding:12px 14px;border-radius:8px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
-  .status.ok{background:#1a2418;border:1px solid #3f6b3a;color:#9fd695;}
-  .status.err{background:#241413;border:1px solid var(--rust);color:#f0a08f;}
+  .status.ok{background:var(--success-bg);border:1px solid var(--success-border);color:var(--success-text);}
+  .status.err{background:var(--error-bg);border:1px solid var(--rust);color:var(--error-text);}
 
   .move-list{list-style:none;margin:0;padding:0;counter-reset:step;}
   .move-list li{
     counter-increment:step;display:flex;align-items:center;gap:4px;
-    padding:9px 4px;border-bottom:1px solid #2a2115;font-family:'JetBrains Mono',monospace;font-size:14px;
+    padding:9px 4px;border-bottom:1px solid var(--divider);font-family:'JetBrains Mono',monospace;font-size:14px;
   }
   .move-list li:last-child{border-bottom:none;}
   .move-list li::before{
     content:counter(step);min-width:24px;height:24px;border-radius:50%;
-    background:#2a2115;color:var(--brass-bright);
+    background:var(--divider);color:var(--brass-bright);
     display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
   }
   .move-plate{color:var(--parchment);font-weight:700;min-width:70px;}
@@ -166,7 +258,7 @@
     text-align:center;
     font-weight:700;
     border-radius:5px;
-    background:#241c13;
+    background:var(--chip-bg);
     color:var(--brass-bright);
     border:1px solid var(--brass);
   }
@@ -186,9 +278,9 @@
 
   /* follow-mode step states in the move list */
   .move-list li.done{opacity:.4;}
-  .move-list li.done::before{content:'\2713';background:#1a2418;color:#9fd695;}
+  .move-list li.done::before{content:'\2713';background:var(--success-bg);color:var(--success-text);}
   .move-list li.active{
-    background:rgba(192,138,62,.1);
+    background:rgba(var(--accent-rgb),.1);
     border:1px solid var(--brass);
     border-radius:8px;
     padding:8px;
@@ -203,16 +295,39 @@
   .action-row{display:flex;gap:8px;width:100%;}
   .action-row .ghost-btn{flex:1;text-align:center;min-width:0;}
 
+  /* mobile result layout: the move list is an internal scroll box on the
+     left, status + stacked buttons sit right beside it and never move —
+     Next/Back auto-scroll the list itself, the page stays put */
+  .follow-flex{display:flex;gap:10px;align-items:flex-start;justify-content:center;}
+  .m-list-box{
+    flex:0 1 420px;min-width:0;position:relative;
+    max-height:min(340px, 58vh);
+    overflow-y:auto;
+    scrollbar-width:thin;scrollbar-color:var(--brass) transparent;
+  }
+  .m-list-box::-webkit-scrollbar{width:5px;}
+  .m-list-box::-webkit-scrollbar-track{background:transparent;}
+  .m-list-box::-webkit-scrollbar-thumb{background:var(--brass);border-radius:3px;}
+  .follow-side{width:132px;flex-shrink:0;}
+  .follow-sticky{display:flex;flex-direction:column;gap:8px;}
+  .follow-sticky .status{margin-bottom:0;font-size:12px;padding:10px;line-height:1.45;}
+  .follow-sticky .status-hint{white-space:normal;}
+  .follow-sticky .ghost-btn{width:100%;text-align:center;padding:11px 8px;}
+  @media (max-width:360px){
+    .follow-side{width:118px;}
+    .follow-flex .move-plate{min-width:56px;}
+  }
+
   /* Exit turns red & pulses when the user tries to edit a locked scheme */
   .ghost-btn.exit-alert{
     border-color:var(--rust) !important;
     color:var(--rust-bright) !important;
-    background:rgba(198,90,63,.14);
+    background:rgba(var(--rust-glow-rgb),.14);
     animation:exitAlertPulse .8s ease-in-out infinite;
   }
   @keyframes exitAlertPulse{
-    0%,100%{box-shadow:0 0 0 0 rgba(198,90,63,0);}
-    50%{box-shadow:0 0 10px 1px rgba(198,90,63,.55);}
+    0%,100%{box-shadow:0 0 0 0 rgba(var(--rust-glow-rgb),0);}
+    50%{box-shadow:0 0 10px 1px rgba(var(--rust-glow-rgb),.55);}
   }
 
   .footnote{color:var(--steel-dim);font-size:11.5px;text-align:center;margin-top:28px;line-height:1.6;}
@@ -356,6 +471,10 @@
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Switch light/dark theme" aria-label="Switch light/dark theme">
+  <span class="theme-icon theme-icon-sun">☀</span>
+  <span class="theme-icon theme-icon-moon">☾</span>
+</button>
 <div class="wrap">
 
   <div class="hero">
@@ -366,7 +485,10 @@
 
   <!-- Панель 1: Lock Setup (всегда) -->
   <div class="panel">
-    <h2>Lock Setup</h2>
+    <div class="panel-head">
+      <h2>Lock Setup</h2>
+      <button class="share-btn" onclick="copyShareLink()" title="Copy a link that saves this exact lock configuration">🔗 Copy Link</button>
+    </div>
     <div class="plate-config-row" id="plateConfigRow">
       <button class="plate-config-btn" data-plates="4">4</button>
       <button class="plate-config-btn" data-plates="5">5</button>
@@ -709,23 +831,23 @@ function renderStaticResult(){
   if(!lastGrouped) return;
   const {container,isDesktop}=activeResultContainer();
   if(!container) return;
-  let html=`<div class="status ok">Done — ${lastTotal} moves.<div class="status-hint">(R – Right, L – Left)</div></div>`;
+  const statusHtml=`<div class="status ok">Done — ${lastTotal} moves.<div class="status-hint">(R – Right, L – Left)</div></div>`;
   const items=buildMoveItems(-1);
-  // mirror the follow-mode grid: Follow sits exactly where Next will appear,
-  // so one click enters the mode and the cursor is already on Next
-  const followRow=`<div class="action-row"><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn follow-btn" onclick="startFollow()">Follow ▶</button></div>`;
-  // disabled Exit placeholder keeps the grid EXACTLY the same height as in
-  // follow mode, so entering/exiting never shifts the buttons under the cursor
-  const exitRow=`<div class="action-row"><button class="ghost-btn" disabled>Exit</button></div>`;
   const copyBtn=`<button class="ghost-btn" onclick="copyResult()">Copy list</button>`;
   const hideBtn=isDesktop
     ?`<button class="ghost-btn" onclick="clearCalcResult()">Hide</button>`
     :`<button class="ghost-btn" onclick="hideResult()">Hide</button>`;
-  const bottomRow=`<div class="action-row">${hideBtn}${copyBtn}</div>`;
+  let html;
   if(isDesktop){
-    html+=`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${followRow}${exitRow}${bottomRow}</div>`;
+    // mirror the follow-mode grid: Follow sits exactly where Next will appear
+    const followRow=`<div class="action-row"><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn follow-btn" onclick="startFollow()">Follow ▶</button></div>`;
+    const exitRow=`<div class="action-row"><button class="ghost-btn" disabled>Exit</button></div>`;
+    const bottomRow=`<div class="action-row">${hideBtn}${copyBtn}</div>`;
+    html=statusHtml+`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${followRow}${exitRow}${bottomRow}</div>`;
   }else{
-    html+=`<ul class="move-list">${items}</ul><div class="result-actions">${followRow}${exitRow}${bottomRow}</div>`;
+    // sidebar from the start: Follow occupies the exact spot Next will take
+    const sideButtons=`<button class="ghost-btn follow-btn" onclick="startFollow()">Follow ▶</button><button class="ghost-btn" disabled>◀ Back</button><button class="ghost-btn" disabled>Exit</button>${hideBtn}${copyBtn}`;
+    html=`<div class="follow-flex"><div class="m-list-box"><ul class="move-list">${items}</ul></div><div class="follow-side"><div class="follow-sticky">${statusHtml}${sideButtons}</div></div></div>`;
   }
   container.innerHTML=html;
 }
@@ -841,7 +963,8 @@ function followEditBlocked(){
     warn=document.createElement('div');
     warn.className='status err follow-lock-warn';
     warn.textContent='The scheme is locked while Follow mode is active — press Exit to make changes.';
-    container.insertBefore(warn, container.firstChild);
+    const host=container.querySelector('.follow-sticky')||container;
+    host.insertBefore(warn, host.firstChild);
   }
   // on phones the warning lives below the scheme — bring it into view,
   // but only if it isn't already visible (no jumping otherwise)
@@ -880,15 +1003,48 @@ function renderFollowUI(){
     :`<button class="ghost-btn" onclick="hideResult()">Hide</button>`;
   // rows: [Back | Next] / [Exit full width] / [Hide | Copy]
   const actionRows=`<div class="action-row">${backBtn}${nextBtn}</div><div class="action-row">${exitBtn}</div><div class="action-row">${hideBtn}${copyBtn}</div>`;
-  let html=status;
+
+  // preserve the list box's current scroll position across the innerHTML
+  // swap below — otherwise the freshly-created box always starts at
+  // scrollTop=0 and every click visibly snaps to the top before animating
+  // back down, which is what was causing the "jumping" on later steps.
+  const oldBox=container.querySelector('.m-list-box')||container.querySelector('.calc-result-list');
+  const prevScrollTop=oldBox?oldBox.scrollTop:0;
+
+  let html;
   if(isDesktop){
-    html+=`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${actionRows}</div>`;
+    html=status+`<div class="calc-result-list"><ul class="move-list">${items}</ul></div><div class="calc-result-actions">${actionRows}</div>`;
   }else{
-    html+=`<ul class="move-list">${items}</ul><div class="result-actions">${actionRows}</div>`;
+    const sideButtons=(finished?'':`${nextBtn}`)+`${backBtn}${exitBtn}${hideBtn}${copyBtn}`;
+    html=`<div class="follow-flex"><div class="m-list-box"><ul class="move-list">${items}</ul></div><div class="follow-side"><div class="follow-sticky">${status}${sideButtons}</div></div></div>`;
   }
   container.innerHTML=html;
+
+  const box=container.querySelector('.m-list-box')||container.querySelector('.calc-result-list');
   const act=container.querySelector('li.active');
-  if(act&&act.scrollIntoView)act.scrollIntoView({block:'nearest'});
+  if(!box||!act)return;
+
+  box.scrollTop=prevScrollTop; // instant restore, no visible flash
+
+  // Anchor point: on mobile, the top button of the side column (Next, or
+  // "Back to start" once finished) — the highlighted step settles level
+  // with it and stays pinned there while the list itself scrolls. On
+  // desktop there's no side column, so anchor a little below the box top.
+  const anchorBtn=container.querySelector('.follow-side .ghost-btn');
+  let anchorBoxOffset;
+  if(anchorBtn){
+    const br0=box.getBoundingClientRect(), ar0=anchorBtn.getBoundingClientRect();
+    anchorBoxOffset=(ar0.top+ar0.height/2)-br0.top;
+  }else{
+    anchorBoxOffset=34;
+  }
+
+  const br=box.getBoundingClientRect(), ar=act.getBoundingClientRect();
+  const itemCenterInContent=(ar.top+ar.height/2-br.top)+box.scrollTop;
+  const maxScroll=Math.max(0, box.scrollHeight-box.clientHeight);
+  const target=Math.max(0, Math.min(itemCenterInContent-anchorBoxOffset, maxScroll));
+
+  box.scrollTo({top:target, behavior:'smooth'});
 }
 
 function clearCalcResult(){
@@ -914,7 +1070,81 @@ function onBreakpointChange(){
 window.matchMedia('(min-width:901px)').addEventListener('change', onBreakpointChange);
 window.matchMedia('(min-width:501px) and (max-width:900px)').addEventListener('change', onBreakpointChange);
 
-renderHolesRow();initPins();renderLock();
+// ================= theme toggle =================
+function applyTheme(t){
+  if(t==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  try{ localStorage.setItem('lockpickTheme', t); }catch(e){}
+}
+function toggleTheme(){
+  const isLight = document.documentElement.getAttribute('data-theme')==='light';
+  applyTheme(isLight ? 'dark' : 'light');
+}
+
+// ================= save / share configuration via URL =================
+function buildShareURL(){
+  const params=new URLSearchParams();
+  params.set('p', numPlates);
+  params.set('pins', pinPositions.join(','));
+  const links=[];
+  for(const k in relations) links.push(k+':'+relations[k]);
+  if(links.length) params.set('links', links.join(','));
+  const url=new URL(window.location.href);
+  url.hash='';
+  url.search=params.toString();
+  return url.toString();
+}
+
+function copyShareLink(){
+  const link=buildShareURL();
+  const btn=event.target.closest('button');
+  navigator.clipboard.writeText(link).then(()=>{
+    if(!btn)return;
+    const old=btn.textContent;
+    btn.textContent='Link copied ✓';
+    setTimeout(()=>{btn.textContent=old;},1800);
+  }).catch(()=>{
+    if(!btn)return;
+    const old=btn.textContent;
+    btn.textContent='Copy failed';
+    setTimeout(()=>{btn.textContent=old;},1800);
+  });
+}
+
+function loadFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  const pinsStr=params.get('pins');
+  if(!pinsStr)return false;
+  let p=parseInt(params.get('p'),10);
+  if(!(p>=4&&p<=7))p=6;
+  numPlates=p;
+  pinPositions=pinsStr.split(',').map(s=>{
+    const v=parseInt(s,10);
+    if(!Number.isFinite(v))return centerOf(numHoles);
+    return Math.max(1, Math.min(numHoles, v));
+  });
+  relations={};
+  const linksStr=params.get('links');
+  if(linksStr){
+    linksStr.split(',').forEach(tok=>{
+      const m=tok.match(/^(\d+)-(\d+):(-?1)$/);
+      if(m){
+        const i=+m[1], j=+m[2], v=+m[3];
+        if(i>=1&&i<=numPlates&&j>=1&&j<=numPlates&&i!==j)relations[i+'-'+j]=v;
+      }
+    });
+  }
+  return true;
+}
+
+const loadedFromURL=loadFromURL();
+renderHolesRow();initPins();
+if(loadedFromURL){
+  document.querySelectorAll('.plate-config-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.plates,10)===numPlates);
+  });
+}
+renderLock();
 </script>
 </body>
 </html>
