@@ -132,7 +132,7 @@
 
   /* theme toggle: fixed icon button, top-right of the whole page */
   .theme-toggle{
-    position:fixed;top:14px;right:14px;z-index:50;
+    position:fixed;top:14px;left:14px;z-index:50;
     width:40px;height:40px;border-radius:50%;
     border:1px solid var(--steel-dim);background:var(--surface-1);color:var(--brass-bright);
     cursor:pointer;transition:border-color .15s, background .15s, transform .2s;
@@ -321,6 +321,14 @@
   .follow-sticky .status{margin-bottom:0;font-size:12px;padding:10px;line-height:1.45;}
   .follow-sticky .status-hint{white-space:normal;}
   .follow-sticky .ghost-btn{width:100%;text-align:center;padding:11px 8px;}
+  /* landscape phones: viewport height is scarce but the sidebar (status +
+     5 stacked buttons) still needs ~330-350px — the list box was capped
+     far below that (58vh), so it hit its own internal scroll long before
+     the sidebar did, making rows look like they got cut off mid-scroll.
+     Raise the cap close to the sidebar's natural height instead. */
+  @media (max-height:500px) and (min-width:501px){
+    .m-list-box{max-height:min(500px, 88vh);}
+  }
   @media (max-width:360px){
     .follow-side{width:118px;}
     .follow-flex .move-plate{min-width:56px;}
@@ -496,6 +504,9 @@
     .panel{padding:16px 12px 20px;}
     .panel .hint{font-size:12.5px;}
 
+    /* keyboard shortcuts are meaningless without a physical keyboard */
+    .shortcuts-btn{display:none;}
+
     .plate-config-btn{font-size:22px;padding:16px 0;min-width:64px;}
 
     .lock-area .lock-wrap{max-width:100%;margin:8px auto 0;}
@@ -511,9 +522,6 @@
     .ghost-btn{flex:1;padding:12px 16px;text-align:center;}
     .move-list li{font-size:13px;}
     .move-plate{min-width:70px;}
-
-    /* Скрываем кнопку Shortcuts на мобильных */
-    .share-btn[onclick*="Shortcuts"]{display:none;}
   }
 
   /* small phones: reset buttons in a roomy row under the scheme */
@@ -567,7 +575,7 @@
     <div class="panel-head">
       <h2>Lock Setup</h2>
       <div class="head-actions">
-        <button class="share-btn" onclick="openShortcutsModal()" title="View keyboard shortcuts">⌨ Shortcuts</button>
+        <button class="share-btn shortcuts-btn" onclick="openShortcutsModal()" title="View keyboard shortcuts">⌨ Shortcuts</button>
         <button class="share-btn" onclick="copyShareLink()" title="Copy a link that saves this exact lock configuration">🔗 Copy Link</button>
         <button class="share-btn" onclick="pasteConfigFromClipboard()" title="Read a lock link from your clipboard and apply it right here">📋 Paste Link</button>
       </div>
@@ -1062,6 +1070,22 @@ function followEditBlocked(){
   },2600);
 }
 
+// Custom smooth scroll (instead of the native `behavior:'smooth'`, whose
+// speed/easing is fixed by the browser and feels abrupt on mobile Chrome)
+// — an eased glide gives a much gentler, more controllable settle.
+function smoothScrollTo(el, targetTop, duration){
+  const startTop=el.scrollTop, delta=targetTop-startTop;
+  if(Math.abs(delta)<1)return;
+  const startTime=performance.now();
+  function easeOutCubic(t){return 1-Math.pow(1-t,3);}
+  function step(now){
+    const t=Math.min(1,(now-startTime)/duration);
+    el.scrollTop=startTop+delta*easeOutCubic(t);
+    if(t<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function renderFollowUI(){
   if(!followState||!lastGrouped)return;
   const {container,isDesktop}=activeResultContainer();
@@ -1105,14 +1129,21 @@ function renderFollowUI(){
 
   const box=container.querySelector('.m-list-box')||container.querySelector('.calc-result-list');
   const act=container.querySelector('li.active');
-  if(!box||!act)return;
-
-  box.scrollTop=prevScrollTop; // instant restore, no visible flash
+  if(!box)return;
+  if(!act){
+    // "finished" state: no active step to anchor to, but still avoid an
+    // unexpected snap back to the top — just keep showing where the list
+    // already was (the browser clamps this naturally if it's now too far).
+    box.scrollTop=prevScrollTop;
+    return;
+  }
 
   // Anchor point: on mobile, the top button of the side column (Next, or
   // "Back to start" once finished) — the highlighted step settles level
   // with it and stays pinned there while the list itself scrolls. On
   // desktop there's no side column, so anchor a little below the box top.
+  // Computed BEFORE restoring scroll position — it only depends on the
+  // box's own (scroll-independent) top edge, not on its current scrollTop.
   const anchorBtn=container.querySelector('.follow-side .ghost-btn');
   let anchorBoxOffset;
   if(anchorBtn){
@@ -1122,12 +1153,37 @@ function renderFollowUI(){
     anchorBoxOffset=34;
   }
 
+  // Ensure there's enough scroll headroom to keep even the LAST step pinned
+  // at the anchor line. Without this, a taller box (more rows visible at
+  // once, which is the whole point of showing more per screen) runs out of
+  // scrollable distance before the sequence ends, so the final few steps
+  // drift below the anchor instead of stopping level with it.
+  // IMPORTANT: this must run BEFORE restoring scrollTop below — otherwise
+  // the browser clamps prevScrollTop against the not-yet-padded (smaller)
+  // scroll range, silently resetting the position, and the padding added
+  // a moment later can't un-clamp it. That mismatch was the real cause of
+  // the "jump" once scrolling got close to the bottom.
+  const rowH=act.getBoundingClientRect().height||40;
+  const neededPad=Math.max(0, box.clientHeight-anchorBoxOffset-rowH/2);
+  const ul=box.querySelector('.move-list');
+  if(ul)ul.style.paddingBottom=neededPad+'px';
+  void box.scrollHeight; // force a synchronous reflow so the padding above
+                          // is actually reflected before scrollTop is set
+                          // and clamped against it below — without this the
+                          // browser clamps against the stale, pre-padding
+                          // layout and silently resets the restore to 0.
+
+  box.scrollTop=prevScrollTop; // instant restore, no visible flash — now safe
+
+  // Re-measure now that scrollTop is in its final, restored state, so the
+  // screen-position and the scrollTop used below are consistent with
+  // each other (an item's on-screen top depends on the box's scrollTop).
   const br=box.getBoundingClientRect(), ar=act.getBoundingClientRect();
   const itemCenterInContent=(ar.top+ar.height/2-br.top)+box.scrollTop;
   const maxScroll=Math.max(0, box.scrollHeight-box.clientHeight);
   const target=Math.max(0, Math.min(itemCenterInContent-anchorBoxOffset, maxScroll));
 
-  box.scrollTo({top:target, behavior:'smooth'});
+  smoothScrollTo(box, target, 480);
 }
 
 function clearCalcResult(){
