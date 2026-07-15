@@ -227,6 +227,11 @@
     margin:0 auto;
   }
   .plate-bar{stroke:var(--plate-bar);stroke-width:17;stroke-linecap:round;cursor:ns-resize;touch-action:none;}
+  /* Follow-mode steps translate this group instead of re-computing every
+     hole's absolute position, so the move can be animated — drag/click/
+     reset all still render instantly (this class is only ever added by
+     the follow-step animation helper, never by the normal render path). */
+  .plate-group.slide-anim{transition:transform .38s cubic-bezier(.16,1,.3,1);}
   .drag-hit{cursor:ns-resize;touch-action:none;}
   .pin-line{stroke:var(--brass-bright);stroke-width:2;opacity:.5;}
   .solved-ring{fill:none;stroke:var(--success-ring);stroke-width:1.5;opacity:.85;pointer-events:none;}
@@ -864,6 +869,39 @@ function addArcEdge(svg,i,j,L,bulges){
   svg.appendChild(arrow);
 }
 
+// Draws (after clearing any stale copy) the pulsing outline + target-hole
+// ring for whatever the CURRENT follow step is. Split out of renderLock so
+// it can also be called immediately/synchronously right after gi changes —
+// during rapid clicking, the deferred full re-render for an in-between step
+// gets skipped (see animatePlatesThen's generation guard), but the overlay
+// itself shouldn't wait for that; it just needs the plate-group to already
+// exist, which it does since those persist across the animation.
+function renderFollowOverlay(svg,L,center){
+  svg.querySelectorAll('.follow-glow').forEach(el=>el.remove());
+  if(!(followState && lastGrouped && followState.gi < lastGrouped.length))return;
+  const g = lastGrouped[followState.gi];
+  if(g.plate > numPlates)return;
+  const x = colX(g.plate,L), h = pinPositions[g.plate-1];
+  const plateG = svg.querySelector(`.plate-group[data-plate="${g.plate}"]`);
+  const target = plateG || svg;
+  const ysRef = holeScreenY(1,center,L), yeRef = holeScreenY(numHoles,center,L);
+  // pulsing outline around the whole plate
+  target.appendChild(svgEl('rect',{class:'follow-glow',x:x-14,y:ysRef-21,width:28,height:(yeRef-ysRef)+42,rx:14,
+    fill:'none',stroke:'var(--brass-bright)','stroke-width':2.5}));
+  // ring + chevron on the hole that must be brought to the pick line
+  const kd = h + g.d*g.count;
+  if(kd>=1 && kd<=numHoles){
+    const hyRef = holeScreenY(kd,center,L);
+    target.appendChild(svgEl('circle',{class:'follow-glow',cx:x,cy:hyRef,r:12,fill:'none',
+      stroke:'var(--brass-bright)','stroke-width':2,'stroke-dasharray':'3 3'}));
+    const up = holeScreenY(kd,h,L) > L.centerY; // hole below the line right now -> plate slides up
+    const pts = up
+      ? `${x-4.5},${hyRef+3.5} ${x},${hyRef-4.5} ${x+4.5},${hyRef+3.5}`
+      : `${x-4.5},${hyRef-3.5} ${x},${hyRef+4.5} ${x+4.5},${hyRef-3.5}`;
+    target.appendChild(svgEl('polygon',{class:'follow-glow',points:pts,fill:'var(--brass-bright)'}));
+  }
+}
+
 function renderLock(){
   const isDesktop = window.matchMedia('(min-width:901px)').matches;
   // Layout (which panel/SVG to draw into) still depends on width — a narrow
@@ -960,19 +998,32 @@ function renderLock(){
 
   const center=centerOf(numHoles),isMobile=window.matchMedia('(max-width:900px)').matches;
   for(let p=1;p<=numPlates;p++){
-    const x=colX(p,L),h=pinPositions[p-1],ys=holeScreenY(1,h,L),ye=holeScreenY(numHoles,h,L);
+    const x=colX(p,L),h=pinPositions[p-1];
+    // Everything that visually belongs to "the plate" (bar + holes) is
+    // drawn ONCE at a fixed reference position (as if h===center) and
+    // then shifted into place with a transform — that's what lets a
+    // follow-mode step animate the slide instead of just teleporting.
+    const ysRef=holeScreenY(1,center,L),yeRef=holeScreenY(numHoles,center,L);
+    const offsetY=(center-h)*L.holeSpacing;
     const hit=svgEl('rect',{class:'drag-hit',x:x-14,y:L.topArrowY-6,width:28,height:(L.bottomArrowY-L.topArrowY)+12,fill:'transparent'});
     if(!isMobile)hit.addEventListener('pointerdown',e=>startDrag(e,p));svg.appendChild(hit);
-    const bar=svgEl('line',{class:'plate-bar',x1:x,y1:ys-9,x2:x,y2:ye+9});
-    if(!isMobile)bar.addEventListener('pointerdown',e=>startDrag(e,p));svg.appendChild(bar);
+    const plateG=svgEl('g',{class:'plate-group','data-plate':p});
+    plateG.style.transform=`translateY(${offsetY}px)`;
+    const bar=svgEl('line',{class:'plate-bar',x1:x,y1:ysRef-9,x2:x,y2:yeRef+9});
+    if(!isMobile)bar.addEventListener('pointerdown',e=>startDrag(e,p));plateG.appendChild(bar);
     for(let k=1;k<=numHoles;k++){
-      const hy=holeScreenY(k,h,L),isCur=(k===h),isGoal=(k===center);
-      let cls='hole-circle';if(isCur)cls+=' pin';else if(isGoal)cls+=' center-hint';
-      const circle=svgEl('circle',{class:cls,cx:x,cy:hy,r:isCur?10:8});
+      const hyRef=holeScreenY(k,center,L),isGoal=(k===center);
+      const circle=svgEl('circle',{class:'hole-circle'+(isGoal?' center-hint':''),cx:x,cy:hyRef,r:8});
       if(!isMobile){circle.addEventListener('pointerdown',e=>startDrag(e,p));circle.addEventListener('click',()=>setPin(p,k));}
       else{circle.addEventListener('click',()=>setPin(p,k));}
-      svg.appendChild(circle);
+      plateG.appendChild(circle);
     }
+    svg.appendChild(plateG);
+    // The pin itself never moves — it's the tool, fixed at the pick line.
+    // What changes is which hole the sliding plate currently has lined up
+    // with it, which is why this circle lives outside plateG entirely
+    // instead of being one of the (now uniform) hole-circles above.
+    svg.appendChild(svgEl('circle',{class:'hole-circle pin',cx:x,cy:L.centerY,r:10,style:'pointer-events:none;'}));
     if(h===center)svg.appendChild(svgEl('circle',{class:'solved-ring',cx:x,cy:L.centerY,r:13}));
     const usePrecise=precisionAvailable&&linkEditMode==='precise';
     if(usePrecise){
@@ -993,28 +1044,7 @@ function renderLock(){
   }
 
   // ----- follow-mode overlay: highlight the plate to move and its target hole -----
-  if(followState && lastGrouped && followState.gi < lastGrouped.length){
-    const g = lastGrouped[followState.gi];
-    if(g.plate <= numPlates){
-      const x = colX(g.plate,L), h = pinPositions[g.plate-1];
-      const ys = holeScreenY(1,h,L), ye = holeScreenY(numHoles,h,L);
-      // pulsing outline around the whole plate
-      svg.appendChild(svgEl('rect',{class:'follow-glow',x:x-14,y:ys-21,width:28,height:(ye-ys)+42,rx:14,
-        fill:'none',stroke:'var(--brass-bright)','stroke-width':2.5}));
-      // ring + chevron on the hole that must be brought to the pick line
-      const kd = h + g.d*g.count;
-      if(kd>=1 && kd<=numHoles){
-        const hy = holeScreenY(kd,h,L);
-        svg.appendChild(svgEl('circle',{class:'follow-glow',cx:x,cy:hy,r:12,fill:'none',
-          stroke:'var(--brass-bright)','stroke-width':2,'stroke-dasharray':'3 3'}));
-        const up = hy > L.centerY; // hole below the line -> plate slides up
-        const pts = up
-          ? `${x-4.5},${hy+3.5} ${x},${hy-4.5} ${x+4.5},${hy+3.5}`
-          : `${x-4.5},${hy-3.5} ${x},${hy+4.5} ${x+4.5},${hy-3.5}`;
-        svg.appendChild(svgEl('polygon',{class:'follow-glow',points:pts,fill:'var(--brass-bright)'}));
-      }
-    }
-  }
+  renderFollowOverlay(svg,L,center);
   scheduleQrUpdate();
 }
 
@@ -1223,6 +1253,51 @@ function startFollow(){
   renderFollowUI();
 }
 
+// Smoothly slides whichever plate(s) changed between two pinPositions
+// snapshots (a follow-mode step can move more than one at once, via
+// linked plates) by animating each .plate-group's transform directly on
+// the DOM elements already on screen, THEN calls back to run the normal
+// full renderLock() — which quietly rebuilds everything at that same
+// final position, so there's no visible jump once the slide settles.
+// A generation counter means if a new step starts before this one
+// finishes (e.g. holding Space), only the latest call gets to trigger
+// the eventual render — stale ones are simply skipped.
+let plateAnimGen=0;
+function animatePlatesThen(oldPins,callback){
+  const myGen=++plateAnimGen;
+  const isDesktop=window.matchMedia('(min-width:901px)').matches;
+  const svg=document.getElementById(isDesktop?'lockSvg':'lockSvgMobile');
+  if(!svg){callback();return;}
+  const changed=[];
+  for(let p=1;p<=numPlates;p++){if(oldPins[p-1]!==pinPositions[p-1])changed.push(p);}
+  if(!changed.length){callback();return;}
+  const L=computeLayout(computeArcLevels()),center=centerOf(numHoles);
+  let pending=0,done=false;
+  const finish=()=>{if(done)return;done=true;if(myGen===plateAnimGen)callback();};
+  const timeoutGuard=setTimeout(finish,480);
+  changed.forEach(p=>{
+    const group=svg.querySelector(`.plate-group[data-plate="${p}"]`);
+    if(!group)return;
+    pending++;
+    const newH=pinPositions[p-1];
+    // deliberately NOT touching hole-circle classes here — the "pin" marking
+    // stays exactly where it visually is and rides along as part of the
+    // plate's own rigid-body slide. Restyling it mid-flight (as the old
+    // code did) made it look like the pin hopped to the new hole a frame
+    // before the plate itself started moving. The classes get refreshed
+    // naturally once the deferred renderLock() below fires.
+    const newOffset=(center-newH)*L.holeSpacing;
+    group.classList.add('slide-anim');
+    requestAnimationFrame(()=>{group.style.transform=`translateY(${newOffset}px)`;});
+    group.addEventListener('transitionend',function h(){
+      group.removeEventListener('transitionend',h);
+      pending--;
+      if(pending<=0){clearTimeout(timeoutGuard);finish();}
+    },{once:true});
+  });
+  if(pending===0){clearTimeout(timeoutGuard);finish();}
+}
+
 function applyGroup(g,sign){
   for(let m=0;m<g.count;m++){
     const d=g.d*sign;
@@ -1240,24 +1315,36 @@ function applyGroup(g,sign){
   }
 }
 
+// Convenience wrapper so the three follow-navigation functions below can
+// refresh the overlay in one line, right when gi changes — not waiting on
+// whatever animatePlatesThen's deferred render ends up doing.
+function syncFollowOverlayNow(){
+  const isDesktop=window.matchMedia('(min-width:901px)').matches;
+  const svg=document.getElementById(isDesktop?'lockSvg':'lockSvgMobile');
+  if(!svg)return;
+  renderFollowOverlay(svg,computeLayout(computeArcLevels()),centerOf(numHoles));
+}
+
 function nextFollowStep(){
   if(!followState||!lastGrouped)return;
   if(followState.gi>=lastGrouped.length)return;
+  const oldPins=pinPositions.slice();
   applyGroup(lastGrouped[followState.gi],1);
   followState.gi++;
   followState.history[followState.gi]=pinPositions.slice();
-  renderLock();
-  renderFollowUI();
+  syncFollowOverlayNow();
+  animatePlatesThen(oldPins,()=>{renderLock();renderFollowUI();});
 }
 
 function backFollowStep(){
   if(!followState||!lastGrouped||followState.gi<=0)return;
+  const oldPins=pinPositions.slice();
   followState.gi--;
   // restore the exact snapshot instead of computing inverse moves —
   // immune to any drift, clamping, or mid-follow edits
   pinPositions=followState.history[followState.gi].slice();
-  renderLock();
-  renderFollowUI();
+  syncFollowOverlayNow();
+  animatePlatesThen(oldPins,()=>{renderLock();renderFollowUI();});
 }
 
 function restoreToSolveStart(){
@@ -1279,11 +1366,12 @@ function exitFollow(){
 // the full-width Back at the finished state: rewind to the very first step
 function backToStart(){
   if(!followState||!followState.history)return;
+  const oldPins=pinPositions.slice();
   pinPositions=followState.history[0].slice();
   followState.gi=0;
   followState.history=[pinPositions.slice()];
-  renderLock();
-  renderFollowUI();
+  syncFollowOverlayNow();
+  animatePlatesThen(oldPins,()=>{renderLock();renderFollowUI();});
 }
 
 // manual edits invalidate the computed path -> silently drop follow mode
