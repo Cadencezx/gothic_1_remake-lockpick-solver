@@ -1333,7 +1333,8 @@ function nextFollowStep(){
   followState.gi++;
   followState.history[followState.gi]=pinPositions.slice();
   syncFollowOverlayNow();
-  animatePlatesThen(oldPins,()=>{renderLock();renderFollowUI();});
+  renderFollowUI(); // the side list/scroll is independent of the plate slide — no reason to lag behind a click
+  animatePlatesThen(oldPins,()=>{renderLock();});
 }
 
 function backFollowStep(){
@@ -1344,7 +1345,8 @@ function backFollowStep(){
   // immune to any drift, clamping, or mid-follow edits
   pinPositions=followState.history[followState.gi].slice();
   syncFollowOverlayNow();
-  animatePlatesThen(oldPins,()=>{renderLock();renderFollowUI();});
+  renderFollowUI();
+  animatePlatesThen(oldPins,()=>{renderLock();});
 }
 
 function restoreToSolveStart(){
@@ -1371,7 +1373,8 @@ function backToStart(){
   followState.gi=0;
   followState.history=[pinPositions.slice()];
   syncFollowOverlayNow();
-  animatePlatesThen(oldPins,()=>{renderLock();renderFollowUI();});
+  renderFollowUI();
+  animatePlatesThen(oldPins,()=>{renderLock();});
 }
 
 // manual edits invalidate the computed path -> silently drop follow mode
